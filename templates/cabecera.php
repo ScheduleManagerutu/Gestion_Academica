@@ -23,11 +23,11 @@
                     >
 
                     
-                    <a class="nav-item nav-link" href="#">Docentes</a>
+                    <a class="nav-item nav-link" href="vista_docentes">Docentes</a>
                     
-                    <a class="nav-item nav-link" href="#">Cursos</a>
+                    <a class="nav-item nav-link" href="vista_cursos">Cursos</a>
                     
-                    <a class="nav-item nav-link" href="#">Materias</a>
+                    <a class="nav-item nav-link" href="vista_materias">Materias</a>
                 
                 </div>
             </nav>
@@ -35,8 +35,8 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-12">
+                <div class="col-12">    
+
+                   
     
-            
-            
-        cabecera(de la pagina)
+        
