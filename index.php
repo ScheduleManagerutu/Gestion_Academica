@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-bs-theme="light">
     <head>
-        <title>Title</title>
+        <title>Gestión de Horarios</title>
         <!-- Required meta tags -->
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,7 +34,7 @@
  <div class="container">
     <div class="row">
         <div class="col-md-8">
-            <h1>Gestion de Horarios</h1>
+            <h1>Gestión de Horarios</h1>
         
             <p>Escuela Técnica Carlos Martín De Vecchi</p>
         
