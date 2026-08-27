@@ -6,7 +6,7 @@
             <div class="col-lg-6">
                 <div class="text-center mb-5">
                     <h1 class="fw-bolder">Bienvenido</h1>
-                    <p class="lead fw-normal text-muted mb-0">Sistema de gestion de horarios</p>
+                    <p class="lead fw-normal text-muted mb-0">Sistema de gestión de horarios</p>
                     <p class="text-help"> Aquí encontraras las distintas secciones de nuestro proyecto</p>
                 </div>
             </div>
