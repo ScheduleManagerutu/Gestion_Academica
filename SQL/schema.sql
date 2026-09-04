@@ -2,16 +2,13 @@
 
 CREATE TABLE `Docente` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(100) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
+  `Documento` varchar(20) NOT NULL,
+  `Materia` varchar(100) NOT NULL,
+  `Telefono` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Tabla de información docente';
-
-ALTER TABLE `BD Web`.Docente CHANGE nombre Documento varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;
-ALTER TABLE `BD Web`.Docente MODIFY COLUMN Documento varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;
-ALTER TABLE `BD Web`.Docente CHANGE email Materia varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;
-ALTER TABLE `BD Web`.Docente MODIFY COLUMN Materia varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL;
-ALTER TABLE `BD Web`.Docente ADD Telefono varchar(20) NULL;
+) ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_0900_ai_ci 
 
 #---------------------------------------------
 
@@ -36,4 +33,15 @@ CREATE TABLE `BD Web`.Materia (
 )
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_0900_ai_ci;
+#------------------------
+CREATE TABLE `Usuario` (
+  `IDusuario` int NOT NULL AUTO_INCREMENT,
+  `Nombre` varchar(50) NOT NULL,
+  `Apellido` varchar(50) NOT NULL,
+  `Correo` varchar(100) NOT NULL,
+  PRIMARY KEY (`IDusuario`),
+  UNIQUE KEY `Usuario_UNIQUE` (`Correo`)
+) ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
 COLLATE=utf8mb4_0900_ai_ci;
