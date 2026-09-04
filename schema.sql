@@ -78,8 +78,7 @@ DROP TABLE IF EXISTS `Materia`;
 CREATE TABLE `Materia` (
   `IDmateria` int NOT NULL AUTO_INCREMENT,
   `Nombre` varchar(100) NOT NULL,
-  `Horas_semana` int NOT NULL,
-  `Turnos` varchar(10) NOT NULL,
+  `Horas_semana` datetime NOT NULL,
   PRIMARY KEY (`IDmateria`),
   CONSTRAINT `Materia_chk_1` CHECK ((`Horas_semana` >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -95,6 +94,33 @@ LOCK TABLES `Materia` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `Turnos`
+--
+
+DROP TABLE IF EXISTS `Turnos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Turnos` (
+  `IDTurno` int NOT NULL,
+  `Cursos` varchar(100) NOT NULL,
+  `Horarios` datetime NOT NULL,
+  `Hora_inicio` datetime NOT NULL,
+  `Hora_fin` datetime NOT NULL,
+  `Dia` date NOT NULL,
+  PRIMARY KEY (`IDTurno`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `Turnos`
+--
+
+LOCK TABLES `Turnos` WRITE;
+/*!40000 ALTER TABLE `Turnos` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Turnos` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Dumping routines for database 'BD Web'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -107,4 +133,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-09-04  8:01:56
+-- Dump completed on 2026-09-04 13:41:48
