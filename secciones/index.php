@@ -1,18 +1,59 @@
 <?php include('../templates/cabecera.php'); ?>
 
-<section class="py-5">
-    <div class="container px-5 my-5">
-        <div class="row gx-5 justify-content-center">
-            <div class="col-lg-6">
-                <div class="text-center mb-5">
-                    <h1 class="fw-bolder">Bienvenido</h1>
-                    <p class="lead fw-normal text-muted mb-0">Sistema de gestión de horarios</p>
-                    <p class="text-help"> Aquí encontraras las distintas secciones de nuestro proyecto</p>
-                </div>
-            </div>
-        </div>
+//Inicio del contenido de la página actual
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Horarios</title>
+//Personalización de estilos para los botones
+    <style>
+        .contenedor-botones {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 270px 0;
+        }
+
+        .boton-cuadrado {
+            width: 400px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #283e53;
+            color: white;
+            text-decoration: none;
+            font-size: 40px;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: 0.3s;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .boton-cuadrado:hover {
+            background-color: #34495e;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+//Coloc
+<body>
+
+    <!-- Botones -->
+    <div class="contenedor-botones">
+        <a href="#creacion-horarios" class="boton-cuadrado">
+            Creación de Horarios
+        </a>
+        <a href="#horarios-creados" class="boton-cuadrado">
+            Horarios Creados
+        </a>
     </div>
 
-<?php include('../templates/pie.php'); ?>  
+</body>
+</html>
 
-
+<?php include('../templates/pie.php'); ?> 
