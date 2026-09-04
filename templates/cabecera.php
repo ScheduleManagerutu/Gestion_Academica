@@ -26,8 +26,6 @@
                     <a class="nav-item nav-link" href="vista_docentes">Docentes</a>
                     
                     <a class="nav-item nav-link" href="vista_cursos">Cursos</a>
-                    
-                    <a class="nav-item nav-link" href="vista_materias">Materias</a>
                 
                 </div>
             </nav>
