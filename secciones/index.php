@@ -1,13 +1,13 @@
 <?php include('../templates/cabecera.php'); ?>
 
-//Inicio del contenido de la página actual
+
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Gestión de Horarios</title>
-//Personalización de estilos para los botones
+
     <style>
         .contenedor-botones {
             display: flex;
@@ -40,9 +40,18 @@
         }
     </style>
 </head>
-//Coloc
-<body>
 
+<body>
+ 
+<!-- Botones -->
+    <div class="contenedor-botones">
+        <a href="#creacion-horarios" class="boton-cuadrado">
+            Creación de Horarios
+        </a>
+        <a href="#horarios-creados" class="boton-cuadrado">
+            Horarios Creados
+        </a>
+    </div>
 
 </body>
 </html>
