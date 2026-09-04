@@ -43,15 +43,6 @@
 //Coloc
 <body>
 
-    <!-- Botones -->
-    <div class="contenedor-botones">
-        <a href="#creacion-horarios" class="boton-cuadrado">
-            Creación de Horarios
-        </a>
-        <a href="#horarios-creados" class="boton-cuadrado">
-            Horarios Creados
-        </a>
-    </div>
 
 </body>
 </html>
