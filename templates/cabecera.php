@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
     <head>
         <title>Gestión de Horarios</title>
         <!-- Required meta tags -->
@@ -23,9 +23,9 @@
                     >
 
                     
-                    <a class="nav-item nav-link" href="vista_docentes">Docentes</a>
+                    <a class="nav-item nav-link" href="vista_creacion-horarios">Crear Horarios</a>
                     
-                    <a class="nav-item nav-link" href="vista_cursos">Cursos</a>
+                    <a class="nav-item nav-link" href="vista_horarios-creados">Horarios Creados</a>
                 
                 </div>
             </nav>
@@ -37,4 +37,4 @@
 
                    
     
-        
+</body>    

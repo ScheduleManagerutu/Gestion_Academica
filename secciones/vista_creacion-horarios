@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Crear horarios</title>
+<link rel="stylesheet" href="../style.css">
+
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="seccion">
+      <div class="seccion-titulo">
+        DOCENTES
+        <span class="agregar">+</span>
+      </div>
+      <div class="item-filtro activo">
+        <span class="bullet">●</span> Todos
+      </div>
+    </div>
+
+    <div class="seccion">
+      <div class="seccion-titulo">
+        CURSOS
+        <span class="agregar">+</span>
+      </div>
+      <div class="item-filtro">
+        3°MF <span class="horas" id="horas-sidebar">0 hs</span>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <div class="seccion-titulo">
+        TURNO
+      </div>
+      <div class="item-filtro turno activo" data-turno="1">
+        <span class="bullet">●</span> Turno 1 (Matutino)
+      </div>
+      <div class="item-filtro turno" data-turno="3">
+        <span class="bullet">●</span> Turno 3 (Vespertino)
+      </div>
+      <div class="item-filtro turno" data-turno="5">
+        <span class="bullet">●</span> Turno 5 (Nocturno)
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="contenido">
+    <div class="tabs">
+      <div class="tab activo">GRILLAS POR CURSO</div>
+      <div class="tab">OCUPACIONES EXTERNAS</div>
+    </div>
+
+    <div class="titulo-seccion">
+      <div>
+        <h2>Grillas por Curso</h2>
+        <div class="subtitulo">Una grilla por curso · Haz clic en una celda para asignar o editar un docente</div>
+      </div>
+      <div class="badge-cursos">1 cursos</div>
+    </div>
+
+    <div class="curso-bloque">
+      <div class="curso-header">
+        <span class="nombre">3°MF</span>
+        <span class="horas-asignadas" id="horas-header">0 horas asignadas</span>
+        <span class="flecha">▾</span>
+      </div>
+
+      <table id="tabla-horario">
+        <thead>
+          <tr>
+            <th>HORA</th>
+            <th>LUNES</th>
+            <th>MARTES</th>
+            <th>MIÉRCOLES</th>
+            <th>JUEVES</th>
+            <th>VIERNES</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td class="hora">07:30 - 08:15</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+          <tr>
+            <td class="hora">08:15 - 09:00</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+
+          <tr class="receso">
+            <td class="hora">09:00 - 09:05</td>
+            <td colspan="5">RECESO</td>
+          </tr>
+
+          <tr>
+            <td class="hora">09:05 - 09:50</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+          <tr>
+            <td class="hora">09:50 - 10:35</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+
+          <tr class="receso">
+            <td class="hora">10:35 - 10:40</td>
+            <td colspan="5">RECESO</td>
+          </tr>
+
+          <tr>
+            <td class="hora">10:40 - 11:25</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+          <tr>
+            <td class="hora">11:25 - 12:10</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+
+          <tr class="receso">
+            <td class="hora">12:10 - 12:15</td>
+            <td colspan="5">RECESO</td>
+          </tr>
+
+          <tr>
+            <td class="hora">12:15 - 13:00</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+
+          <tr class="receso">
+            <td class="hora">13:00 - 13:05</td>
+            <td colspan="5">RECESO</td>
+          </tr>
+
+          <tr>
+            <td class="hora">13:05 - 13:50</td>
+            <td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</div>
+
+<div class="ayuda">?</div>
+
+</body>
+</html>
