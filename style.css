@@ -197,6 +197,9 @@
   /* Celdas de clase (donde luego se asignará un docente) */
   tbody td.celda {
     cursor: pointer;
+
+    ;
+
   }
   tbody td.celda:hover {
     background: #fdf6e8;
