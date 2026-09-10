@@ -16,19 +16,7 @@
     </head>
     <body>
 
-    <nav class="navbar navbar-expand navbar-light bg-light">
-                <div class="nav navbar-nav">
-                    <a class="nav-item nav-link active" href="#" aria-current="page"
-                        >Home <span class="visually-hidden">(current)</span></a
-                    >
 
-                    
-                    <a class="nav-item nav-link" href="vista_creacion-horarios">Crear Horarios</a>
-                    
-                    <a class="nav-item nav-link" href="vista_horarios-creados">Horarios Creados</a>
-                
-                </div>
-            </nav>
 
 
         <div class="container">

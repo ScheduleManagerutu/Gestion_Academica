@@ -45,10 +45,10 @@
  
 <!-- Botones -->
     <div class="contenedor-botones">
-        <a href="#creacion-horarios" class="boton-cuadrado">
+        <a href="vista_creacion-horarios" class="boton-cuadrado">
             Creación de Horarios
         </a>
-        <a href="#horarios-creados" class="boton-cuadrado">
+        <a href="horarios-creados" class="boton-cuadrado">
             Horarios Creados
         </a>
     </div>
