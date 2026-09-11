@@ -1,3 +1,5 @@
+//Codigo estrictamente hecho para el inicio de sesión
+
 <?php 
 session_start();
 
