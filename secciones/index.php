@@ -57,6 +57,7 @@
 
 <!-- Botones -->
     <div class="contenedor-botones">
+
         <a href="vista_creacion-horarios.html" class="boton-cuadrado">
             Creación de Horarios
         </a>
