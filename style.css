@@ -49,7 +49,7 @@
     margin-bottom: 10px;
   }
   .seccion-titulo .agregar {
-    background: #eee2c9;
+    background: #d6d5d5;
     color: #b5891c;
     border-radius: 50%;
     width: 16px;
@@ -70,8 +70,8 @@
     gap: 8px;
   }
   .item-filtro.activo {
-    background: #fdeedb;
-    color: #d97e1a;
+    background: #cfcfce;
+    color: #f07269;
     font-weight: bold;
   }
   .item-filtro .bullet {
@@ -92,7 +92,7 @@
   .tabs {
     display: flex;
     gap: 24px;
-    border-bottom: 1px solid #e6ddc9;
+    border-bottom: 1px solid #c7c7c7;
     margin-bottom: 20px;
   }
   .tab {
@@ -103,8 +103,8 @@
     cursor: pointer;
   }
   .tab.activo {
-    color: #d97e1a;
-    border-bottom: 2px solid #d97e1a;
+    color: #f07269;
+    border-bottom: 2px solid #f07269;
     font-weight: bold;
   }
 
@@ -125,7 +125,7 @@
   }
   .badge-cursos {
     background: #fbe1e0;
-    color: #c9564e;
+    color: #f07269;
     font-size: 12px;
     padding: 4px 12px;
     border-radius: 14px;
@@ -185,13 +185,13 @@
 
   /* Separación entre columnas (días) y entre HORA y los días */
   th, td {
-    border-right: 1px solid #e6ddc9;
+    border-right: 1px solid #b8b8b8;
   }
   th:last-child, td:last-child {
     border-right: none;
   }
   td.hora, thead th:first-child {
-    border-right: 2px solid #d9cba8;
+    border-right: 2px solid #b8b8b8;
   }
 
   /* Celdas de clase (donde luego se asignará un docente) */
@@ -202,7 +202,7 @@
 
   }
   tbody td.celda:hover {
-    background: #fdf6e8;
+    background: #bdbdbd;
   }
   tbody td.celda.asignada {
     background: #eaf3ea;
@@ -212,14 +212,14 @@
 
   /* Fila de receso: no clickeable, color distinto */
   tr.receso td {
-    background-color: #fff2cc;
-    color: #a3821a;
+    background-color: #d1d1d0;
+    color: #6e6e6e;
     font-style: italic;
     text-align: center;
     cursor: default;
   }
   tr.receso td.hora {
-    color: #a3821a;
+    color: #969696;
     font-style: normal;
     font-weight: bold;
   }

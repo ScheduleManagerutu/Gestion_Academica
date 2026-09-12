@@ -13,28 +13,11 @@
             integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
             crossorigin="anonymous"
         />
+
+    </style>
+    
     </head>
     <body>
 
-    <nav class="navbar navbar-expand navbar-light bg-light">
-                <div class="nav navbar-nav">
-                    <a class="nav-item nav-link active" href="#" aria-current="page"
-                        >Home <span class="visually-hidden">(current)</span></a
-                    >
-
-                    
-                    <a class="nav-item nav-link" href="vista_creacion-horarios">Crear Horarios</a>
-                    
-                    <a class="nav-item nav-link" href="vista_horarios-creados">Horarios Creados</a>
-                
-                </div>
-            </nav>
-
-
-        <div class="container">
-            <div class="row">
-                <div class="col-12">    
-
-                   
     
-</body>    
+    </body>    

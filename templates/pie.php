@@ -1,5 +1,7 @@
  
- 
+<head>
+    
+</head>
  </div>  
                 </div>
 
@@ -9,7 +11,7 @@
         
     <h8 class="card-title">Contacto:</h8>
         
-        <a href="mailto:Schedulemanar.utu@gmail.com" class="card-link">Schedulemanar.utu@gmail.com</a>
+        <a href="mailto:Schedulemanar.utu@gmail.com" class="card-link">schedulemanar.utu@gmail.com</a>
         
     </div>
 </div>

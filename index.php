@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!doctype html>
 <html lang="es" data-bs-theme="light">
     <head>
-        <title>Gestión de Horarios</title>
+        <title>Inicio de sesión</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
