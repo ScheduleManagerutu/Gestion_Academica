@@ -14,7 +14,7 @@
             display: flex;
             justify-content: center;
             gap: 30px;
-            margin: 220px 0;
+            margin: 210px 0;
         }
 
         .boton-cuadrado {

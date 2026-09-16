@@ -1,4 +1,4 @@
-* { box-sizing: border-box; }
+ss* { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: -apple-system, Segoe UI, Arial, sans-serif;
@@ -213,7 +213,7 @@
   /* Fila de receso: no clickeable, color distinto */
   tr.receso td {
     background-color: #d1d1d0;
-    color: #6e6e6e;
+    color: #5f5f5f;
     font-style: italic;
     text-align: center;
     cursor: default;
