@@ -1,18 +1,72 @@
 <?php include('../templates/cabecera.php'); ?>
 
-<section class="py-5">
-    <div class="container px-5 my-5">
-        <div class="row gx-5 justify-content-center">
-            <div class="col-lg-6">
-                <div class="text-center mb-5">
-                    <h1 class="fw-bolder">Bienvenido</h1>
-                    <p class="lead fw-normal text-muted mb-0">Sistema de gestión de horarios</p>
-                    <p class="text-help"> Aquí encontraras las distintas secciones de nuestro proyecto</p>
-                </div>
-            </div>
-        </div>
+
+
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Horarios</title>
+
+    <style>
+
+        .contenedor-botones {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 210px 0;
+        }
+
+        .boton-cuadrado {
+            width: 400px;
+            height: 270px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #d6d6d6;
+            color: black;
+            text-decoration: none;
+            font-size: 30px;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: 0.3s;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 2px solid #8f8f8f;
+        }
+
+        .boton-cuadrado:hover {
+            background-color: #a1a1a1;
+            transform: scale(1.05);
+        }
+
+        img {
+            display: block;
+            margin: 0 auto;
+            width: 200px;
+            height: 200px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+ 
+    <img src="Logo.png" alt="Logo Empresa" >
+
+<!-- Botones -->
+    <div class="contenedor-botones">
+
+        <a href="vista_creacion-horarios.html" class="boton-cuadrado">
+            Creación de Horarios
+        </a>
+        <a href="vista_horarios-creados.html" class="boton-cuadrado">
+            Horarios Creados
+        </a>
     </div>
 
-<?php include('../templates/pie.php'); ?>  
+</body>
+</html>
 
-
+<?php include('../templates/pie.php'); ?> 

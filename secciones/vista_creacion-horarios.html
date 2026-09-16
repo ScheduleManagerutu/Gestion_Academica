@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crear horarios</title>
+  
+  <!-- CSS de Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="seccion">
+      <div class="seccion-titulo">
+        DOCENTES
+        <span class="agregar">+</span>
+      </div>
+      <div class="item-filtro activo">
+        <span class="bullet">●</span> Todos
+      </div>
+    </div>
+
+    <div class="seccion">
+      <div class="seccion-titulo">
+        CURSOS
+        <span class="agregar">+</span>
+      </div>
+      <div class="item-filtro">
+        3°MF <span class="horas" id="horas-sidebar">0 hs</span>
+      </div>
+    </div>
+
+    <!-- SECCIÓN TURNO (Corregida e Interactiva) -->
+    <div class="seccion" id="seccion-turnos">
+      <div class="seccion-titulo">
+        TURNO
+      </div>
+      <div class="item-filtro turno activo" data-turno="1" onclick="seleccionarTurno(this)">
+        <span class="bullet">●</span> Turno 1 (Matutino)
+      </div>
+      <div class="item-filtro turno" data-turno="3" onclick="seleccionarTurno(this)">
+        <span class="bullet">●</span> Turno 3 (Vespertino)
+      </div>
+      <div class="item-filtro turno" data-turno="5" onclick="seleccionarTurno(this)">
+        <span class="bullet">●</span> Turno 5 (Nocturno)
+      </div>
+
+     
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="contenido">
+    <div class="tabs">
+      <div class="tab activo">GRILLAS POR CURSO</div>
+      <div class="tab">OCUPACIONES EXTERNAS</div>
+    </div>
+
+    <div class="titulo-seccion">
+      <div>
+        <h2>Grillas por Curso</h2>
+        <div class="subtitulo">Una grilla por curso · Haz clic en una celda para asignar o editar un docente</div>
+      </div>
+      <div class="badge-cursos">1 cursos</div>
+    </div>
+
+    <div class="curso-bloque">
+      <div class="curso-header">
+        <span class="nombre" id="curso-nombre">3°MF - Turno 1 (Matutino)</span>
+        <span class="horas-asignadas" id="horas-header">0 horas asignadas</span>
+        <span class="flecha">▾</span>
+      </div>
+
+      <table id="tabla-horario">
+        <thead>
+          <tr>
+            <th>HORA</th>
+            <th>LUNES</th>
+            <th>MARTES</th>
+            <th>MIÉRCOLES</th>
+            <th>JUEVES</th>
+            <th>VIERNES</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+          <!-- Bloque Matutino por defecto -->
+          <tr><td class="hora">07:30 - 08:15</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr><td class="hora">08:15 - 09:00</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr class="receso"><td class="hora">09:00 - 09:05</td><td colspan="5">RECESO</td></tr>
+          <tr><td class="hora">09:05 - 09:50</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr><td class="hora">09:50 - 10:35</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr class="receso"><td class="hora">10:35 - 10:40</td><td colspan="5">RECESO</td></tr>
+          <tr><td class="hora">10:40 - 11:25</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr><td class="hora">11:25 - 12:10</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr class="receso"><td class="hora">12:10 - 12:15</td><td colspan="5">RECESO</td></tr>
+          <tr><td class="hora">12:15 - 13:00</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+          <tr class="receso"><td class="hora">13:00 - 13:05</td><td colspan="5">RECESO</td></tr>
+          <tr><td class="hora">13:05 - 13:50</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</div>
+
+<div class="ayuda">?</div>
+
+<!-- LÓGICA JAVASCRIPT PARA SELECCIONAR -->
+<script>
+  // Cambia la clase 'activo' en la barra lateral al hacer clic
+  function seleccionarTurno(elemento) {
+    const turnos = document.querySelectorAll('#seccion-turnos .turno');
+    turnos.forEach(t => t.classList.remove('activo'));
+    elemento.classList.add('activo');
+  }
+
+  // Clona la información seleccionada y genera/actualiza la plantilla a la derecha
+  function aplicarTurnoAGrilla() {
+    const turnoActivo = document.querySelector('#seccion-turnos .turno.activo');
+    if (!turnoActivo) return;
+
+    const nombreTurno = turnoActivo.textContent.trim().replace('●', '').trim();
+    const idTurno = turnoActivo.getAttribute('data-turno');
+
+    // 1. Actualizar el título de la plantilla derecha
+    document.getElementById('curso-nombre').innerText = `3°MF - ${nombreTurno}`;
+
+    // 2. Definir horarios según el turno seleccionado
+    const horariosPorTurno = {
+      "1": [ // Matutino
+        { hora: "07:30 - 08:15", tipo: "clase" },
+        { hora: "08:15 - 09:00", tipo: "clase" },
+        { hora: "09:00 - 09:05", tipo: "receso" },
+        { hora: "09:05 - 09:50", tipo: "clase" },
+        { hora: "09:50 - 10:35", tipo: "clase" }
+      ],
+      "3": [ // Vespertino
+        { hora: "13:30 - 14:15", tipo: "clase" },
+        { hora: "14:15 - 15:00", tipo: "clase" },
+        { hora: "15:00 - 15:05", tipo: "receso" },
+        { hora: "15:05 - 15:50", tipo: "clase" },
+        { hora: "15:50 - 16:35", tipo: "clase" }
+      ],
+      "5": [ // Nocturno
+        { hora: "18:30 - 19:15", tipo: "clase" },
+        { hora: "19:15 - 20:00", tipo: "clase" },
+        { hora: "20:00 - 20:05", tipo: "receso" },
+        { hora: "20:05 - 20:50", tipo: "clase" },
+        { hora: "20:50 - 21:35", tipo: "clase" }
+      ]
+    };
+
+    // 3. Renderizar las filas dinámicamente en la tabla
+    const cuerpoTabla = document.getElementById('cuerpo-tabla');
+    cuerpoTabla.innerHTML = ''; // Limpiar filas anteriores
+
+    const filas = horariosPorTurno[idTurno] || horariosPorTurno["1"];
+
+    filas.forEach(f => {
+      const tr = document.createElement('tr');
+      if (f.tipo === "receso") {
+        tr.className = "receso";
+        tr.innerHTML = `<td class="hora">${f.hora}</td><td colspan="5">RECESO</td>`;
+      } else {
+        tr.innerHTML = `
+          <td class="hora">${f.hora}</td>
+          <td class="celda"></td>
+          <td class="celda"></td>
+          <td class="celda"></td>
+          <td class="celda"></td>
+          <td class="celda"></td>
+        `;
+      }
+      cuerpoTabla.appendChild(tr);
+    });
+  }
+</script>
+
+</body>
+</html>

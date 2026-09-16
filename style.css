@@ -1,0 +1,242 @@
+ss* { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, Segoe UI, Arial, sans-serif;
+    background: #ececec;
+    color: #3a3a3a;
+  }
+
+  /* Header */
+  header {
+    padding: 18px 30px 12px 30px;
+    border-bottom: 1px solid #e6ddc9;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  header h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+  .ciclo {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  /* Layout principal */
+  .layout {
+    display: flex;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    padding: 20px;
+    border-right: 1px solid #d6d5d1c2;
+    min-height: calc(100vh - 80px);
+  }
+  .seccion {
+    margin-bottom: 24px;
+  }
+  .seccion-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #8a8a8a;
+    margin-bottom: 10px;
+  }
+  .seccion-titulo .agregar {
+    background: #d6d5d5;
+    color: #b5891c;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .item-filtro {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .item-filtro.activo {
+    background: #cfcfce;
+    color: #f07269;
+    font-weight: bold;
+  }
+  .item-filtro .bullet {
+    font-size: 10px;
+  }
+  .item-filtro .horas {
+    margin-left: auto;
+    font-size: 11px;
+    color: #999;
+  }
+
+  /* Contenido principal */
+  .contenido {
+    flex: 1;
+    padding: 20px 30px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid #c7c7c7;
+    margin-bottom: 20px;
+  }
+  .tab {
+    padding-bottom: 10px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #999;
+    cursor: pointer;
+  }
+  .tab.activo {
+    color: #f07269;
+    border-bottom: 2px solid #f07269;
+    font-weight: bold;
+  }
+
+  .titulo-seccion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .titulo-seccion h2 {
+    font-size: 18px;
+    margin: 0 0 4px 0;
+  }
+  .subtitulo {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 18px;
+  }
+  .badge-cursos {
+    background: #fbe1e0;
+    color: #f07269;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 14px;
+    height: fit-content;
+  }
+
+  /* Bloque de curso */
+  .curso-bloque {
+    background: #fffdf9;
+    border: 1px solid #e6ddc9;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .curso-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid #e6ddc9;
+  }
+  .curso-header .nombre {
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .curso-header .horas-asignadas {
+    font-size: 12px;
+    color: #999;
+  }
+  .curso-header .flecha {
+    margin-left: auto;
+    color: #bbb;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: #999;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e6ddc9;
+  }
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0e9d8;
+    font-size: 12px;
+    color: #999;
+  }
+  tbody td.hora {
+    color: #999;
+    width: 90px;
+    white-space: nowrap;
+  }
+
+  /* Separación entre columnas (días) y entre HORA y los días */
+  th, td {
+    border-right: 1px solid #b8b8b8;
+  }
+  th:last-child, td:last-child {
+    border-right: none;
+  }
+  td.hora, thead th:first-child {
+    border-right: 2px solid #b8b8b8;
+  }
+
+  /* Celdas de clase (donde luego se asignará un docente) */
+  tbody td.celda {
+    cursor: pointer;
+
+    ;
+
+  }
+  tbody td.celda:hover {
+    background: #bdbdbd;
+  }
+  tbody td.celda.asignada {
+    background: #eaf3ea;
+    color: #2f6b34;
+    font-weight: bold;
+  }
+
+  /* Fila de receso: no clickeable, color distinto */
+  tr.receso td {
+    background-color: #d1d1d0;
+    color: #5f5f5f;
+    font-style: italic;
+    text-align: center;
+    cursor: default;
+  }
+  tr.receso td.hora {
+    color: #969696;
+    font-style: normal;
+    font-weight: bold;
+  }
+
+  /* Botón de ayuda flotante */
+  .ayuda {
+    position: fixed;
+    bottom: 20px;
+    right: 24px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #2b2b2b;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+  }
