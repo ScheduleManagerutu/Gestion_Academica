@@ -194,21 +194,42 @@ ss* { box-sizing: border-box; }
     border-right: 2px solid #b8b8b8;
   }
 
-  /* Celdas de clase (donde luego se asignará un docente) */
-  tbody td.celda {
-    cursor: pointer;
+ /* Celdas de clase (donde luego se asignará un docente) */
 
-    ;
+tbody td.celda[contenteditable="true"] {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    color: #000000 !important; /* Fuerza la letra negra */
+    font-size: 16px !important;
+    z-index: 9999 !important;
+    position: relative !important;
+}
 
-  }
-  tbody td.celda:hover {
-    background: #bdbdbd;
-  }
-  tbody td.celda.asignada {
-    background: #eaf3ea;
-    color: #2f6b34;
-    font-weight: bold;
-  }
+tbody td.celda {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: pointer; 
+}
+
+/* Efecto al pasar el mouse por encima */
+tbody td.celda:hover {
+  background: #bdbdbd;
+}
+
+/* Efecto NUEVO: Cuando haces clic y estás escribiendo dentro de la celda */
+tbody td.celda[contenteditable="true"]:focus {
+  background-color: #ffffff;
+  outline: 2px solid #e74c3c; /* Borde rojo/azul para saber exactamente dónde estás escribiendo */
+  cursor: text;
+}
+
+/* Estado para cuando la clase ya está guardada/asignada */
+tbody td.celda.asignada {
+  background: #eaf3ea;
+  color: #2f6b34;
+  font-weight: bold;
+}
 
   /* Fila de receso: no clickeable, color distinto */
   tr.receso td {
