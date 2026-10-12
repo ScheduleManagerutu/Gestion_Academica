@@ -1,1 +1,456 @@
-"Gestión de Docentes"
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Horarios creados</title>
+  <!-- CSS de Bootstrap 5 (igual que la página de creación) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Mismo style.css que usa vista_creación-horarios.html -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar con los filtros -->
+  <aside class="sidebar">
+    <!-- Botón para volver al menú inicial -->
+    <a href="index.php" class="btn-volver">← Volver al menú</a>
+
+    <div class="seccion">
+      <div class="seccion-titulo">TURNO</div>
+      <div id="lista-turnos"></div>
+    </div>
+
+    <div class="seccion">
+      <div class="seccion-titulo">GRUPO</div>
+      <div id="lista-grupos"></div>
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="contenido">
+    <div class="tabs">
+      <div class="tab activo">HORARIOS GUARDADOS</div>
+    </div>
+
+    <div class="titulo-seccion">
+      <div>
+        <h2>Horarios creados</h2>
+        <div class="subtitulo">Filtra por turno y grupo · Haz clic en "Ver grilla" para ver el horario completo</div>
+      </div>
+      <div class="badge-cursos" id="badge-horarios">0 horarios</div>
+    </div>
+
+    <!-- Botones -->
+    <div class="barra-filtros">
+      <button class="btn-limpiar" onclick="limpiarFiltros()">Limpiar filtros</button>
+      <button class="btn-borrar" onclick="borrarFiltrados()">Borrar horarios del filtro</button>
+      <button class="btn-limpiar" onclick="cargarEjemplo()">Cargar datos de ejemplo</button>
+    </div>
+
+    <!-- Lista de horarios guardados -->
+    <div class="curso-bloque">
+      <div class="curso-header">
+        <span class="nombre">Horarios guardados</span>
+        <span class="flecha">▾</span>
+      </div>
+
+      <table class="tabla-lista">
+        <thead>
+          <tr>
+            <th>NOMBRE</th>
+            <th>TURNO</th>
+            <th>GRUPO</th>
+            <th>FECHA</th>
+            <th>ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla"></tbody>
+      </table>
+      <div id="mensaje" class="vacio"></div>
+    </div>
+
+    <!-- Aquí se muestra la grilla elegida -->
+    <div id="detalle"></div>
+  </main>
+
+</div>
+
+
+<script>
+// Las grillas se guardan en localStorage con este nombre.
+// La página vista_creación-horarios.html las guarda con el mismo nombre.
+var NOMBRE_GUARDADO = "grillas_horarios";
+
+// Turnos disponibles (el valor es el mismo que se guarda al crear el horario)
+var TURNOS = [
+  { valor: "Matutino",   etiqueta: "Turno 1 (Matutino)" },
+  { valor: "Vespertino", etiqueta: "Turno 3 (Vespertino)" },
+  { valor: "Nocturno",   etiqueta: "Turno 5 (Nocturno)" }
+];
+
+var grillas = [];        // todas las grillas guardadas
+var listaGrupos = [];    // grupos que existen en las grillas
+var turnoElegido = "";   // "" significa "Todos"
+var grupoElegido = "";   // "" significa "Todos"
+
+
+// Cambia los símbolos < > & para que un nombre raro no rompa la página
+function limpiar(texto) {
+  texto = String(texto);
+  texto = texto.replace(/&/g, "&amp;");
+  texto = texto.replace(/</g, "&lt;");
+  texto = texto.replace(/>/g, "&gt;");
+  return texto;
+}
+
+
+// 1) Leer las grillas guardadas
+function leerGrillas() {
+  var texto = localStorage.getItem(NOMBRE_GUARDADO);
+  if (texto == null) {
+    grillas = [];
+  } else {
+    grillas = JSON.parse(texto);
+  }
+}
+
+
+// 2) Armar la lista de grupos sin repetir
+function armarListaGrupos() {
+  listaGrupos = [];
+  for (var i = 0; i < grillas.length; i++) {
+    if (listaGrupos.indexOf(grillas[i].grupo) == -1) {
+      listaGrupos.push(grillas[i].grupo);
+    }
+  }
+  listaGrupos.sort();
+
+  // Si el grupo elegido ya no existe, volver a "Todos"
+  if (listaGrupos.indexOf(grupoElegido) == -1) {
+    grupoElegido = "";
+  }
+}
+
+
+// 3) Dibujar los filtros del sidebar
+function dibujarFiltros() {
+  // Turnos
+  var html = "";
+  var clase = "item-filtro";
+  if (turnoElegido == "") { clase += " activo"; }
+  html += '<div class="' + clase + '" onclick="elegirTurno(\'\')"><span class="bullet">●</span> Todos</div>';
+
+  for (var i = 0; i < TURNOS.length; i++) {
+    clase = "item-filtro";
+    if (TURNOS[i].valor == turnoElegido) { clase += " activo"; }
+    html += '<div class="' + clase + '" onclick="elegirTurno(\'' + TURNOS[i].valor + '\')">';
+    html += '<span class="bullet">●</span> ' + TURNOS[i].etiqueta + '</div>';
+  }
+  document.getElementById("lista-turnos").innerHTML = html;
+
+  // Grupos
+  html = "";
+  clase = "item-filtro";
+  if (grupoElegido == "") { clase += " activo"; }
+  html += '<div class="' + clase + '" onclick="elegirGrupo(-1)"><span class="bullet">●</span> Todos</div>';
+
+  for (var g = 0; g < listaGrupos.length; g++) {
+    clase = "item-filtro";
+    if (listaGrupos[g] == grupoElegido) { clase += " activo"; }
+    html += '<div class="' + clase + '" onclick="elegirGrupo(' + g + ')">';
+    html += '<span class="bullet">●</span> ' + limpiar(listaGrupos[g]);
+    // La × elimina el grupo (stopPropagation evita que cuente como clic en el grupo)
+    html += '<span class="borrar" title="Eliminar grupo" onclick="event.stopPropagation(); borrarGrupo(' + g + ')">×</span>';
+    html += '</div>';
+  }
+  document.getElementById("lista-grupos").innerHTML = html;
+}
+
+
+// 4) Clic en un turno o en un grupo del sidebar
+function elegirTurno(valor) {
+  turnoElegido = valor;
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+function elegirGrupo(indice) {
+  if (indice < 0) {
+    grupoElegido = "";
+  } else {
+    grupoElegido = listaGrupos[indice];
+  }
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+
+// 5) Mostrar en la tabla solo las grillas que cumplan los filtros
+function mostrarTabla() {
+  var filas = "";
+  var cantidad = 0;
+
+  for (var i = 0; i < grillas.length; i++) {
+    var g = grillas[i];
+
+    if (coincideFiltro(g)) {
+      filas += "<tr>";
+      filas += "<td>" + limpiar(g.nombre) + "</td>";
+      filas += "<td>" + limpiar(g.turno) + "</td>";
+      filas += "<td>" + limpiar(g.grupo) + "</td>";
+      filas += "<td>" + limpiar(g.fecha || "-") + "</td>";
+      filas += '<td>';
+      filas += '<button class="btn-ver" onclick="verGrilla(' + i + ')">Ver grilla</button>';
+      filas += '<button class="btn-borrar" onclick="borrarHorario(' + i + ')">Borrar</button>';
+      filas += '</td>';
+      filas += "</tr>";
+      cantidad++;
+    }
+  }
+
+  document.getElementById("cuerpoTabla").innerHTML = filas;
+
+  // Contador de arriba
+  if (cantidad == 1) {
+    document.getElementById("badge-horarios").textContent = "1 horario";
+  } else {
+    document.getElementById("badge-horarios").textContent = cantidad + " horarios";
+  }
+
+  // Mensaje cuando no hay nada para mostrar
+  if (grillas.length == 0) {
+    document.getElementById("mensaje").textContent = "Todavía no hay horarios guardados.";
+  } else if (cantidad == 0) {
+    document.getElementById("mensaje").textContent = "No hay horarios con ese filtro.";
+  } else {
+    document.getElementById("mensaje").textContent = "";
+  }
+
+  cerrarDetalle();
+}
+
+
+// 6) Mostrar la grilla completa de un horario (i = posición en la lista)
+function verGrilla(i) {
+  var g = grillas[i];
+  var horas = 0;
+  var cantidadDias = g.dias.length;
+
+  // Fila de títulos (HORA + los días)
+  var titulos = "<tr><th>HORA</th>";
+  for (var d = 0; d < cantidadDias; d++) {
+    titulos += "<th>" + limpiar(g.dias[d]).toUpperCase() + "</th>";
+  }
+  titulos += "</tr>";
+
+  // Una fila por cada hora
+  var filas = "";
+  for (var f = 0; f < g.filas.length; f++) {
+    var fila = g.filas[f];
+
+    if (fila.celdas[0] == "RECESO") {
+      filas += '<tr class="receso">';
+      filas += '<td class="hora">' + limpiar(fila.hora) + '</td>';
+      filas += '<td colspan="' + cantidadDias + '">RECESO</td>';
+      filas += '</tr>';
+    } else {
+      filas += '<tr>';
+      filas += '<td class="hora">' + limpiar(fila.hora) + '</td>';
+      for (var c = 0; c < fila.celdas.length; c++) {
+        if (fila.celdas[c] != "") {
+          filas += '<td class="ocupada">' + limpiar(fila.celdas[c]) + '</td>';
+          horas++;
+        } else {
+          filas += '<td></td>';
+        }
+      }
+      filas += '</tr>';
+    }
+  }
+
+  var html = '<div class="curso-bloque">';
+  html += '<div class="curso-header">';
+  html += '<span class="nombre">' + limpiar(g.nombre) + '</span>';
+  html += '<span class="horas-asignadas">' + horas + ' horas asignadas</span>';
+  html += '<span class="flecha cerrar" onclick="cerrarDetalle()" title="Cerrar">✕</span>';
+  html += '</div>';
+  html += '<table><thead>' + titulos + '</thead><tbody>' + filas + '</tbody></table>';
+  html += '</div>';
+
+  document.getElementById("detalle").innerHTML = html;
+  document.getElementById("detalle").scrollIntoView();
+}
+
+function cerrarDetalle() {
+  document.getElementById("detalle").innerHTML = "";
+}
+
+
+// 7) Borrar horarios y grupos
+
+// Dice si una grilla cumple los filtros elegidos
+function coincideFiltro(g) {
+  // Si el filtro está en "Todos" (vacío), coincide siempre
+  var turnoOk = (turnoElegido == "" || g.turno == turnoElegido);
+  var grupoOk = (grupoElegido == "" || g.grupo == grupoElegido);
+  return turnoOk && grupoOk;
+}
+
+// Guarda la lista actual y vuelve a dibujar todo
+function guardarYActualizar() {
+  localStorage.setItem(NOMBRE_GUARDADO, JSON.stringify(grillas));
+  armarListaGrupos();
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+// Botón "Borrar" de una fila: borra ese horario
+function borrarHorario(i) {
+  var seguro = confirm("¿Borrar el horario \"" + grillas[i].nombre + "\"? No se puede deshacer.");
+  if (!seguro) {
+    return;
+  }
+  grillas.splice(i, 1);
+  guardarYActualizar();
+}
+
+// Botón "Borrar horarios del filtro": borra todos los que se ven en la tabla
+function borrarFiltrados() {
+  var cantidad = 0;
+  for (var i = 0; i < grillas.length; i++) {
+    if (coincideFiltro(grillas[i])) {
+      cantidad++;
+    }
+  }
+
+  if (cantidad == 0) {
+    alert("No hay horarios para borrar con este filtro.");
+    return;
+  }
+
+  var mensaje = "¿Borrar " + cantidad + " horario(s) del filtro actual? No se puede deshacer.";
+  if (turnoElegido == "" && grupoElegido == "") {
+    mensaje = "No hay ningún filtro elegido: se borrarán TODOS los horarios guardados (" + cantidad + "). ¿Continuar?";
+  }
+  if (!confirm(mensaje)) {
+    return;
+  }
+
+  // Quedarse solo con los que NO coinciden con el filtro
+  var quedan = [];
+  for (var j = 0; j < grillas.length; j++) {
+    if (!coincideFiltro(grillas[j])) {
+      quedan.push(grillas[j]);
+    }
+  }
+  grillas = quedan;
+  guardarYActualizar();
+}
+
+// × de un grupo del sidebar: elimina el grupo y todos sus horarios
+function borrarGrupo(indice) {
+  var grupo = listaGrupos[indice];
+
+  var cantidad = 0;
+  for (var i = 0; i < grillas.length; i++) {
+    if (grillas[i].grupo == grupo) {
+      cantidad++;
+    }
+  }
+
+  var seguro = confirm("¿Eliminar el grupo " + grupo + " y sus " + cantidad + " horario(s) guardado(s)? No se puede deshacer.");
+  if (!seguro) {
+    return;
+  }
+
+  var quedan = [];
+  for (var j = 0; j < grillas.length; j++) {
+    if (grillas[j].grupo != grupo) {
+      quedan.push(grillas[j]);
+    }
+  }
+  grillas = quedan;
+  guardarYActualizar();   // si el grupo estaba elegido, vuelve a "Todos"
+}
+
+
+// 8) Botón "Limpiar filtros"
+function limpiarFiltros() {
+  turnoElegido = "";
+  grupoElegido = "";
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+
+// 9) Botón de ejemplo: guarda 3 grillas de prueba
+function cargarEjemplo() {
+  // Cuidado: esto reemplaza lo que ya está guardado
+  if (grillas.length > 0) {
+    var seguir = confirm("Esto reemplaza los horarios guardados por datos de ejemplo. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  var dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+  var receso = ["RECESO", "RECESO", "RECESO", "RECESO", "RECESO"];
+
+  var ejemplo = [
+    {
+      nombre: "Horario 3MF - Matutino",
+      turno: "Matutino",
+      grupo: "3MF",
+      fecha: "2026-10-01",
+      dias: dias,
+      filas: [
+        { hora: "07:30 - 08:15", celdas: ["María Galarza", "Juan Pérez", "", "María Galarza", "Juan Pérez"] },
+        { hora: "08:15 - 09:00", celdas: ["María Galarza", "Juan Pérez", "", "María Galarza", ""] },
+        { hora: "09:00 - 09:05", celdas: receso },
+        { hora: "09:05 - 09:50", celdas: ["", "María Galarza", "Juan Pérez", "", "Juan Pérez"] }
+      ]
+    },
+    {
+      nombre: "Horario 2MF - Vespertino",
+      turno: "Vespertino",
+      grupo: "2MF",
+      fecha: "2026-10-02",
+      dias: dias,
+      filas: [
+        { hora: "13:30 - 14:15", celdas: ["Juan Pérez", "", "María Galarza", "", "Juan Pérez"] },
+        { hora: "14:15 - 15:00", celdas: ["Juan Pérez", "", "María Galarza", "", ""] }
+      ]
+    },
+    {
+      nombre: "Horario 1MF - Nocturno",
+      turno: "Nocturno",
+      grupo: "1MF",
+      fecha: "2026-10-03",
+      dias: dias,
+      filas: [
+        { hora: "17:50 - 18:35", celdas: ["María Galarza", "", "Juan Pérez", "María Galarza", ""] },
+        { hora: "18:35 - 19:20", celdas: ["María Galarza", "", "Juan Pérez", "", ""] }
+      ]
+    }
+  ];
+
+  localStorage.setItem(NOMBRE_GUARDADO, JSON.stringify(ejemplo));
+  iniciar();
+}
+
+
+// 10) Lo que se hace al abrir la página
+function iniciar() {
+  leerGrillas();
+  armarListaGrupos();
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+iniciar();
+</script>
+
+</body>
+</html>

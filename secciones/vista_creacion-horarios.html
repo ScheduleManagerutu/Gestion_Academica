@@ -1,4 +1,3 @@
- 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,42 +13,43 @@
 
   <!-- Sidebar -->
   <aside class="sidebar">
+    <!-- Botón para volver al menú inicial -->
+    <a href="index.php" class="btn-volver" onclick="return confirmarSalida()">← Volver al menú</a>
+
     <div class="seccion">
       <div class="seccion-titulo">
         DOCENTES
-        <span class="agregar">+</span>
+        <span class="agregar" onclick="agregarDocente()" title="Agregar docente">+</span>
       </div>
-      <div class="item-filtro activo">
+      <div class="item-filtro activo" id="docente-todos" onclick="seleccionarDocente(-1)">
         <span class="bullet">●</span> Todos
       </div>
+      <!-- Aquí JavaScript dibuja los docentes agregados -->
+      <div id="lista-docentes"></div>
     </div>
 
     <div class="seccion">
       <div class="seccion-titulo">
         CURSOS
-        <span class="agregar">+</span>
+        <span class="agregar" onclick="agregarCurso()" title="Agregar curso">+</span>
       </div>
-      <div class="item-filtro">
-        3°MF <span class="horas" id="horas-sidebar">0 hs</span>
-      </div>
+      <!-- Aquí JavaScript dibuja los cursos agregados -->
+      <div id="lista-cursos"></div>
     </div>
 
-    <!-- SECCIÓN TURNO (Corregida e Interactiva) -->
+    <!-- TURNOS: el valor de data-turno es el mismo que usa el filtro de la vista -->
     <div class="seccion" id="seccion-turnos">
-      <div class="seccion-titulo">
-        TURNO
-      </div>
-      <div class="item-filtro turno activo" data-turno="1" onclick="seleccionarTurno(this)">
+      <div class="seccion-titulo">TURNO</div>
+
+      <div class="item-filtro turno activo" data-turno="Matutino" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 1 (Matutino)
       </div>
-      <div class="item-filtro turno" data-turno="3" onclick="seleccionarTurno(this)">
+      <div class="item-filtro turno" data-turno="Vespertino" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 3 (Vespertino)
       </div>
-      <div class="item-filtro turno" data-turno="5" onclick="seleccionarTurno(this)">
+      <div class="item-filtro turno" data-turno="Nocturno" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 5 (Nocturno)
       </div>
-
-     
     </div>
   </aside>
 
@@ -65,12 +65,24 @@
         <h2>Grillas por Curso</h2>
         <div class="subtitulo">Una grilla por curso · Haz clic en una celda para asignar o editar un docente</div>
       </div>
-      <div class="badge-cursos">1 cursos</div>
+      <div class="badges">
+        <div class="badge-cursos" id="badge-cursos">0 cursos</div>
+        <div class="badge-cursos" id="badge-docentes">0 docentes</div>
+      </div>
+    </div>
+
+    <!-- Grupo y botones de guardado -->
+    <div class="barra-guardar">
+      Curso: <b id="curso-activo">ninguno</b>
+      <button class="btn-guardar" onclick="guardarHorario()">Guardar horario</button>
+      <button class="btn-limpiar" onclick="limpiarGrilla()">Limpiar grilla</button>
+      <span id="info-docente"></span>
+      <span id="aviso"></span>
     </div>
 
     <div class="curso-bloque">
       <div class="curso-header">
-        <span class="nombre" id="curso-nombre">3°MF - Turno 1 (Matutino)</span>
+        <span class="nombre" id="curso-nombre">(sin curso) - Matutino</span>
         <span class="horas-asignadas" id="horas-header">0 horas asignadas</span>
         <span class="flecha">▾</span>
       </div>
@@ -86,344 +98,732 @@
             <th>VIERNES</th>
           </tr>
         </thead>
-        <tbody id="cuerpo-tabla">
-          <!-- Bloque Matutino por defecto -->
-          <tr><td class="hora">07:30 - 08:15</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr><td class="hora">08:15 - 09:00</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr class="receso"><td class="hora">09:00 - 09:05</td><td colspan="5">RECESO</td></tr>
-          <tr><td class="hora">09:05 - 09:50</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr><td class="hora">09:50 - 10:35</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr class="receso"><td class="hora">10:35 - 10:40</td><td colspan="5">RECESO</td></tr>
-          <tr><td class="hora">10:40 - 11:25</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr><td class="hora">11:25 - 12:10</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr class="receso"><td class="hora">12:10 - 12:15</td><td colspan="5">RECESO</td></tr>
-          <tr><td class="hora">12:15 - 13:00</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-          <tr class="receso"><td class="hora">13:00 - 13:05</td><td colspan="5">RECESO</td></tr>
-          <tr><td class="hora">13:05 - 13:50</td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td><td class="celda"></td></tr>
-        </tbody>
+        <!-- Las filas las dibuja JavaScript según el turno -->
+        <tbody id="cuerpo-tabla" onclick="clicTabla(event)"></tbody>
       </table>
     </div>
   </main>
 
 </div>
 
-<div class="ayuda">?</div>
 
-<!-- LÓGICA JAVASCRIPT PARA SELECCIONAR Y GENERAR LA PLANTILLA -->
+<!-- ================= CHATBOT ================= -->
+<div class="ayuda" id="btnAyuda" title="Asistente de ayuda">?</div>
+
+<div class="chat-container" id="chatContainer">
+  <div class="chat-header">
+    <h3>Asistente de Horarios</h3>
+    <button class="btn-cerrar" id="btnCerrar" type="button">&times;</button>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="mensaje bot">¡Hola! Puedes hacerme preguntas sobre docentes como <strong>María Galarza</strong> o <strong>Juan Pérez</strong>.</div>
+  </div>
+
+  <form id="chatForm" class="input-group">
+    <input type="text" id="mensajeInput" placeholder="Ej: Salón de Maria Galarza" required autocomplete="off">
+    <button type="submit" class="btn-enviar">Enviar</button>
+  </form>
+
+  <div class="pruebas">
+    <p>Pruebas rápidas:</p>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué grupo está asignada Maria Galarza?')">Grupo</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué salón se encuentra Maria Galarza?')">Salón</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿Qué horarios tiene tomados Maria Galarza?')">Horarios</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('Necesito sugerencias de horarios libres para mover una hora con Maria Galarza')">Sugerir libre</button>
+  </div>
+</div>
+
+
+<!-- ================= JAVASCRIPT DE LA GRILLA ================= -->
 <script>
-  // Cambia la clase 'activo' en la barra lateral al hacer clic
-  function seleccionarTurno(elemento) {
-    const turnos = document.querySelectorAll('#seccion-turnos .turno');
-    turnos.forEach(t => t.classList.remove('activo'));
-    elemento.classList.add('activo');
+// Mismo nombre que usa vista_horarios-creados.html para leer las grillas
+var NOMBRE_GUARDADO = "grillas_horarios";
+
+var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+// Horas de cada turno (la clave es el nombre del turno)
+var horarios = {
+  "Matutino": [
+    { hora: "07:30 - 08:15", tipo: "clase" },
+    { hora: "08:15 - 09:00", tipo: "clase" },
+    { hora: "09:00 - 09:05", tipo: "receso" },
+    { hora: "09:05 - 09:50", tipo: "clase" },
+    { hora: "09:50 - 10:35", tipo: "clase" },
+    { hora: "10:35 - 10:40", tipo: "receso" },
+    { hora: "10:40 - 11:25", tipo: "clase" },
+    { hora: "11:25 - 12:10", tipo: "clase" },
+    { hora: "12:10 - 12:15", tipo: "receso" },
+    { hora: "12:15 - 13:00", tipo: "clase" },
+    { hora: "13:00 - 13:05", tipo: "receso" },
+    { hora: "13:05 - 13:50", tipo: "clase" }
+  ],
+  "Vespertino": [
+    { hora: "13:30 - 14:15", tipo: "clase" },
+    { hora: "14:15 - 15:00", tipo: "clase" },
+    { hora: "15:00 - 15:05", tipo: "receso" },
+    { hora: "15:05 - 15:50", tipo: "clase" },
+    { hora: "15:50 - 16:35", tipo: "clase" }
+  ],
+  "Nocturno": [
+    { hora: "17:50 - 18:35", tipo: "clase" },
+    { hora: "18:35 - 19:20", tipo: "clase" },
+    { hora: "19:20 - 20:00", tipo: "clase" },
+    { hora: "20:00 - 20:05", tipo: "receso" },
+    { hora: "20:05 - 20:45", tipo: "clase" },
+    { hora: "20:45 - 21:25", tipo: "clase" },
+    { hora: "21:25 - 21:30", tipo: "receso" },
+    { hora: "21:30 - 22:10", tipo: "clase" },
+    { hora: "22:10 - 22:15", tipo: "receso" },
+    { hora: "22:15 - 22:55", tipo: "clase" },
+    { hora: "22:55 - 23:35", tipo: "clase" }
+  ]
+};
+
+var turnoActual = "Matutino";
+
+// Docentes agregados con el botón "+" y el docente elegido en el sidebar
+var NOMBRE_DOCENTES = "docentes_horarios";
+var docentes = [];
+var docenteActual = "";   // "" significa "Todos" (ningún docente elegido)
+
+// Cursos agregados con el botón "+" y el curso elegido en el sidebar
+var NOMBRE_CURSOS = "cursos_horarios";
+var cursos = [];
+var cursoActual = "";     // "" significa que todavía no hay curso elegido
+
+// Pasa a true cuando se cambia la grilla y a false cuando se guarda
+var sinGuardar = false;
+
+
+// Cuenta las celdas con docente asignado
+function contarHoras() {
+  return document.querySelectorAll("#cuerpo-tabla td.asignada").length;
+}
+
+// Actualiza los contadores de horas
+function actualizarHoras() {
+  var horas = contarHoras();
+  document.getElementById("horas-header").textContent = horas + " horas asignadas";
+}
+
+// Actualiza el título del bloque de la grilla
+function actualizarTitulo() {
+  var curso = cursoActual;
+  if (curso == "") {
+    curso = "(sin curso)";
+  }
+  document.getElementById("curso-nombre").textContent = curso + " - " + turnoActual;
+}
+
+
+// Dibuja las filas de la tabla según el turno actual
+function dibujarGrilla() {
+  var filas = horarios[turnoActual];
+  var html = "";
+
+  for (var i = 0; i < filas.length; i++) {
+    if (filas[i].tipo == "receso") {
+      html += '<tr class="receso">';
+      html += '<td class="hora">' + filas[i].hora + '</td>';
+      html += '<td colspan="5">RECESO</td>';
+      html += '</tr>';
+    } else {
+      html += '<tr>';
+      html += '<td class="hora">' + filas[i].hora + '</td>';
+      for (var d = 0; d < 5; d++) {
+        html += '<td class="celda"></td>';
+      }
+      html += '</tr>';
+    }
   }
 
-  // Clona la información seleccionada y genera/actualiza la plantilla a la derecha
-  function aplicarTurnoAGrilla() {
-    const turnoActivo = document.querySelector('#seccion-turnos .turno.activo');
-    if (!turnoActivo) return;
+  document.getElementById("cuerpo-tabla").innerHTML = html;
+  actualizarTitulo();
+  actualizarHoras();
+  sinGuardar = false;
+}
 
-    const nombreTurno = turnoActivo.textContent.trim().replace('●', '').trim();
-    const idTurno = turnoActivo.getAttribute('data-turno');
+// Si ya hay una grilla guardada de este curso y turno, la carga en la tabla
+function cargarGrillaGuardada() {
+  if (cursoActual == "") {
+    return;
+  }
 
-    // 1. Actualizar el título de la plantilla derecha
-    document.getElementById('curso-nombre').innerText = `3°MF - ${nombreTurno}`;
+  var grillas = leerGrillas();
+  var guardada = null;
+  for (var g = 0; g < grillas.length; g++) {
+    if (grillas[g].turno == turnoActual && grillas[g].grupo == cursoActual) {
+      guardada = grillas[g];
+    }
+  }
+  if (guardada == null) {
+    return;
+  }
 
-    // 2. Definir horarios según el turno seleccionado
-    const horariosPorTurno = {
-      "1": [ // Matutino
-        { hora: "07:30 - 08:15", tipo: "clase" },
-        { hora: "08:15 - 09:00", tipo: "clase" },
-        { hora: "09:00 - 09:05", tipo: "receso" },
-        { hora: "09:05 - 09:50", tipo: "clase" },
-        { hora: "09:50 - 10:35", tipo: "clase" }
-      ],
-      "3": [ // Vespertino
-        { hora: "13:30 - 14:15", tipo: "clase" },
-        { hora: "14:15 - 15:00", tipo: "clase" },
-        { hora: "15:00 - 15:05", tipo: "receso" },
-        { hora: "15:05 - 15:50", tipo: "clase" },
-        { hora: "15:50 - 16:35", tipo: "clase" }
-      ],
-      "5": [ // Nocturno
-        { hora: "18:30 - 19:15", tipo: "clase" },
-        { hora: "19:15 - 20:00", tipo: "clase" },
-        { hora: "20:00 - 20:05", tipo: "receso" },
-        { hora: "20:05 - 20:50", tipo: "clase" },
-        { hora: "20:50 - 21:35", tipo: "clase" }
-      ]
+  var filasTabla = document.getElementById("cuerpo-tabla").rows;
+
+  for (var i = 0; i < filasTabla.length; i++) {
+    if (filasTabla[i].className == "receso") {
+      continue;
+    }
+
+    // Buscar en la grilla guardada la fila con la misma hora
+    var hora = filasTabla[i].cells[0].textContent;
+    for (var f = 0; f < guardada.filas.length; f++) {
+      if (guardada.filas[f].hora == hora) {
+        for (var c = 1; c <= 5; c++) {
+          var texto = guardada.filas[f].celdas[c - 1];
+          if (texto != "") {
+            filasTabla[i].cells[c].textContent = texto;
+            filasTabla[i].cells[c].classList.add("asignada");
+          }
+        }
+      }
+    }
+  }
+}
+
+// Dibuja la grilla vacía y le carga lo guardado (si existe)
+function mostrarGrilla() {
+  dibujarGrilla();
+  cargarGrillaGuardada();
+  actualizarHoras();
+  mostrarAviso("");
+}
+
+
+// Se ejecuta al hacer clic en un turno del sidebar
+function seleccionarTurno(elemento) {
+  var nuevoTurno = elemento.getAttribute("data-turno");
+
+  if (nuevoTurno == turnoActual) {
+    return;
+  }
+
+  // Avisar si hay cambios que todavía no se guardaron
+  if (sinGuardar) {
+    var seguir = confirm("Hay cambios sin guardar en la grilla. Si cambias de turno se pierden. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  var turnos = document.querySelectorAll("#seccion-turnos .turno");
+  for (var i = 0; i < turnos.length; i++) {
+    turnos[i].classList.remove("activo");
+  }
+  elemento.classList.add("activo");
+
+  turnoActual = nuevoTurno;
+  mostrarGrilla();
+}
+
+
+// Clic en una celda: pide el docente y lo escribe
+function clicTabla(evento) {
+  var celda = evento.target;
+
+  if (!celda.classList.contains("celda")) {
+    return; // no es una celda de clase (hora o receso)
+  }
+
+  if (cursoActual == "") {
+    alert("Primero agrega o elige un curso con el botón + de CURSOS.");
+    return;
+  }
+
+  var texto;
+
+  if (docenteActual != "") {
+    // Hay un docente elegido en el sidebar: el clic lo asigna,
+    // y si la celda ya tenía a ese docente, la vacía
+    if (celda.textContent == docenteActual) {
+      texto = "";
+    } else {
+      texto = docenteActual;
+    }
+  } else {
+    // Sin docente elegido: se escribe el nombre a mano
+    texto = prompt("Docente (deja vacío para borrar):", celda.textContent);
+    if (texto === null) {
+      return; // el usuario canceló
+    }
+    texto = texto.trim();
+  }
+
+  celda.textContent = texto;
+
+  if (texto == "") {
+    celda.classList.remove("asignada");
+  } else {
+    celda.classList.add("asignada");
+  }
+  actualizarHoras();
+  sinGuardar = true;
+}
+
+
+// Vacía todas las celdas
+function limpiarGrilla() {
+  if (contarHoras() == 0) {
+    return;
+  }
+  if (confirm("¿Borrar todos los docentes de la grilla?")) {
+    dibujarGrilla();
+    sinGuardar = true;
+    mostrarAviso("");
+  }
+}
+
+
+// Antes de volver al menú: avisar si hay cambios sin guardar
+function confirmarSalida() {
+  if (sinGuardar) {
+    return confirm("Hay cambios sin guardar en la grilla. ¿Volver al menú de todos modos?");
+  }
+  return true;
+}
+
+function mostrarAviso(texto) {
+  document.getElementById("aviso").textContent = texto;
+}
+
+function fechaHoy() {
+  var hoy = new Date();
+  var mes = hoy.getMonth() + 1;
+  var dia = hoy.getDate();
+  if (mes < 10) { mes = "0" + mes; }
+  if (dia < 10) { dia = "0" + dia; }
+  return hoy.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function leerGrillas() {
+  var texto = localStorage.getItem(NOMBRE_GUARDADO);
+  if (texto == null) {
+    return [];
+  }
+  return JSON.parse(texto);
+}
+
+
+// Guarda la grilla en el formato que lee vista_horarios-creados.html
+function guardarHorario() {
+  // El curso elegido es el grupo con el que filtra la otra página
+  var grupo = cursoActual;
+
+  // Validación: el curso es obligatorio para poder filtrar
+  if (grupo == "") {
+    alert("Primero agrega un curso con el botón + de CURSOS.");
+    return;
+  }
+
+  if (contarHoras() == 0) {
+    var guardarVacia = confirm("La grilla está vacía. ¿Guardarla igual?");
+    if (!guardarVacia) {
+      return;
+    }
+  }
+
+  // Recorrer la tabla y armar la lista de filas
+  var filasTabla = document.getElementById("cuerpo-tabla").rows;
+  var filas = [];
+
+  for (var i = 0; i < filasTabla.length; i++) {
+    var fila = filasTabla[i];
+    var celdas = [];
+
+    if (fila.className == "receso") {
+      for (var d = 0; d < 5; d++) {
+        celdas.push("RECESO");
+      }
+    } else {
+      for (var c = 1; c <= 5; c++) {
+        celdas.push(fila.cells[c].textContent);
+      }
+    }
+
+    filas.push({ hora: fila.cells[0].textContent, celdas: celdas });
+  }
+
+  var nuevaGrilla = {
+    nombre: "Horario " + grupo + " - " + turnoActual,
+    turno: turnoActual,
+    grupo: grupo,
+    fecha: fechaHoy(),
+    dias: DIAS,
+    filas: filas
+  };
+
+  // Buscar si ya existe una grilla del mismo turno y grupo (evita repetidas)
+  var grillas = leerGrillas();
+  var posicion = -1;
+  for (var g = 0; g < grillas.length; g++) {
+    if (grillas[g].turno == turnoActual && grillas[g].grupo == grupo) {
+      posicion = g;
+    }
+  }
+
+  if (posicion >= 0) {
+    var reemplazar = confirm("Ya existe una grilla de " + grupo + " en el turno " + turnoActual + ". ¿Reemplazarla?");
+    if (!reemplazar) {
+      return;
+    }
+    grillas[posicion] = nuevaGrilla;
+  } else {
+    grillas.push(nuevaGrilla);
+  }
+
+  localStorage.setItem(NOMBRE_GUARDADO, JSON.stringify(grillas));
+  sinGuardar = false;
+  mostrarAviso("Horario guardado ✔");
+}
+
+
+// ---------- DOCENTES ----------
+
+function leerDocentes() {
+  var texto = localStorage.getItem(NOMBRE_DOCENTES);
+  if (texto == null) {
+    return [];
+  }
+  return JSON.parse(texto);
+}
+
+function guardarDocentes() {
+  localStorage.setItem(NOMBRE_DOCENTES, JSON.stringify(docentes));
+}
+
+// Dibuja la lista de docentes en el sidebar
+function dibujarDocentes() {
+  var lista = document.getElementById("lista-docentes");
+  lista.innerHTML = "";
+
+  for (var i = 0; i < docentes.length; i++) {
+    var item = document.createElement("div");
+    item.className = "item-filtro";
+    if (docentes[i] == docenteActual) {
+      item.className += " activo";
+    }
+    item.setAttribute("data-indice", i);
+    item.onclick = function () {
+      seleccionarDocente(this.getAttribute("data-indice"));
     };
 
-    // 3. Renderizar las filas dinámicamente en la tabla
-    const cuerpoTabla = document.getElementById('cuerpo-tabla');
-    cuerpoTabla.innerHTML = ''; // Limpiar filas anteriores
+    var bullet = document.createElement("span");
+    bullet.className = "bullet";
+    bullet.textContent = "●";
 
-    const filas = horariosPorTurno[idTurno] || horariosPorTurno["1"];
+    var nombre = document.createElement("span");
+    nombre.textContent = docentes[i];   // textContent evita problemas con símbolos raros
 
-    filas.forEach(f => {
-      const tr = document.createElement('tr');
-      if (f.tipo === "receso") {
-        tr.className = "receso";
-        tr.innerHTML = `<td class="hora">${f.hora}</td><td colspan="5">RECESO</td>`;
-      } else {
-        tr.innerHTML = `
-          <td class="hora">${f.hora}</td>
-          <td class="celda"></td>
-          <td class="celda"></td>
-          <td class="celda"></td>
-          <td class="celda"></td>
-          <td class="celda"></td>
-        `;
-      }
-      cuerpoTabla.appendChild(tr);
-    });
+    var borrar = document.createElement("span");
+    borrar.className = "borrar";
+    borrar.textContent = "×";
+    borrar.title = "Quitar docente";
+    borrar.onclick = function (evento) {
+      evento.stopPropagation();   // que no cuente como clic en el docente
+      borrarDocente(this.parentNode.getAttribute("data-indice"));
+    };
+
+    item.appendChild(bullet);
+    item.appendChild(nombre);
+    item.appendChild(borrar);
+    lista.appendChild(item);
   }
+
+  // Contador de docentes
+  if (docentes.length == 1) {
+    document.getElementById("badge-docentes").textContent = "1 docente";
+  } else {
+    document.getElementById("badge-docentes").textContent = docentes.length + " docentes";
+  }
+
+  // Marcar "Todos" si no hay docente elegido
+  var todos = document.getElementById("docente-todos");
+  if (docenteActual == "") {
+    todos.className = "item-filtro activo";
+    document.getElementById("info-docente").textContent = "Sin docente elegido: se pedirá el nombre en cada celda";
+  } else {
+    todos.className = "item-filtro";
+    document.getElementById("info-docente").textContent = "Asignando: " + docenteActual;
+  }
+}
+
+// Botón "+" de DOCENTES
+function agregarDocente() {
+  var nombre = prompt("Nombre del nuevo docente:");
+  if (nombre === null) {
+    return; // canceló
+  }
+
+  nombre = nombre.trim();
+  if (nombre == "") {
+    alert("Escribe un nombre.");
+    return;
+  }
+
+  // Evitar docentes repetidos (sin importar mayúsculas)
+  for (var i = 0; i < docentes.length; i++) {
+    if (docentes[i].toLowerCase() == nombre.toLowerCase()) {
+      alert("Ese docente ya está en la lista.");
+      return;
+    }
+  }
+
+  docentes.push(nombre);
+  guardarDocentes();
+  docenteActual = nombre;   // queda elegido para asignarlo enseguida
+  dibujarDocentes();
+}
+
+// Elegir un docente del sidebar (-1 = Todos)
+function seleccionarDocente(indice) {
+  if (indice < 0) {
+    docenteActual = "";
+  } else {
+    docenteActual = docentes[indice];
+  }
+  dibujarDocentes();
+}
+
+// Botón × de cada docente
+function borrarDocente(indice) {
+  var quitar = confirm("¿Quitar a " + docentes[indice] + " de la lista? Las celdas ya asignadas no cambian.");
+  if (!quitar) {
+    return;
+  }
+
+  if (docentes[indice] == docenteActual) {
+    docenteActual = "";
+  }
+  docentes.splice(indice, 1);
+  guardarDocentes();
+  dibujarDocentes();
+}
+
+
+// ---------- CURSOS ----------
+
+function leerCursos() {
+  var texto = localStorage.getItem(NOMBRE_CURSOS);
+  if (texto == null) {
+    return [];
+  }
+  return JSON.parse(texto);
+}
+
+function guardarCursos() {
+  localStorage.setItem(NOMBRE_CURSOS, JSON.stringify(cursos));
+}
+
+// Dibuja la lista de cursos en el sidebar
+function dibujarCursos() {
+  var lista = document.getElementById("lista-cursos");
+  lista.innerHTML = "";
+
+  for (var i = 0; i < cursos.length; i++) {
+    var item = document.createElement("div");
+    item.className = "item-filtro";
+    if (cursos[i] == cursoActual) {
+      item.className += " activo";
+    }
+    item.setAttribute("data-indice", i);
+    item.onclick = function () {
+      seleccionarCurso(this.getAttribute("data-indice"));
+    };
+
+    var bullet = document.createElement("span");
+    bullet.className = "bullet";
+    bullet.textContent = "●";
+
+    var nombre = document.createElement("span");
+    nombre.textContent = cursos[i];
+
+    var borrar = document.createElement("span");
+    borrar.className = "borrar";
+    borrar.textContent = "×";
+    borrar.title = "Quitar curso";
+    borrar.onclick = function (evento) {
+      evento.stopPropagation();
+      borrarCurso(this.parentNode.getAttribute("data-indice"));
+    };
+
+    item.appendChild(bullet);
+    item.appendChild(nombre);
+    item.appendChild(borrar);
+    lista.appendChild(item);
+  }
+
+  // Contador de cursos y curso activo
+  if (cursos.length == 1) {
+    document.getElementById("badge-cursos").textContent = "1 curso";
+  } else {
+    document.getElementById("badge-cursos").textContent = cursos.length + " cursos";
+  }
+
+  if (cursoActual == "") {
+    document.getElementById("curso-activo").textContent = "ninguno";
+  } else {
+    document.getElementById("curso-activo").textContent = cursoActual;
+  }
+}
+
+// Botón "+" de CURSOS
+function agregarCurso() {
+  var nombre = prompt("Nombre del nuevo curso (por ejemplo 3MF):");
+  if (nombre === null) {
+    return; // canceló
+  }
+
+  nombre = nombre.trim();
+  if (nombre == "") {
+    alert("Escribe un nombre.");
+    return;
+  }
+
+  // Evitar cursos repetidos (sin importar mayúsculas)
+  for (var i = 0; i < cursos.length; i++) {
+    if (cursos[i].toLowerCase() == nombre.toLowerCase()) {
+      alert("Ese curso ya está en la lista.");
+      return;
+    }
+  }
+
+  cursos.push(nombre);
+  guardarCursos();
+  dibujarCursos();
+  seleccionarCurso(cursos.length - 1);   // queda elegido el curso nuevo
+}
+
+// Elegir un curso del sidebar: muestra su grilla
+function seleccionarCurso(indice) {
+  var nuevo = cursos[indice];
+
+  if (nuevo == cursoActual) {
+    return;
+  }
+
+  if (sinGuardar) {
+    var seguir = confirm("Hay cambios sin guardar en la grilla. Si cambias de curso se pierden. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  cursoActual = nuevo;
+  dibujarCursos();
+  mostrarGrilla();
+}
+
+// Botón × de cada curso
+function borrarCurso(indice) {
+  var quitar = confirm("¿Quitar el curso " + cursos[indice] + " de la lista? Las grillas ya guardadas no se borran.");
+  if (!quitar) {
+    return;
+  }
+
+  var eraElActual = (cursos[indice] == cursoActual);
+
+  if (eraElActual) {
+    cursoActual = "";
+  }
+  cursos.splice(indice, 1);
+  guardarCursos();
+  dibujarCursos();
+
+  if (eraElActual) {
+    mostrarGrilla();   // queda la grilla vacía
+  }
+}
+
+
+// Al abrir la página
+docentes = leerDocentes();
+dibujarDocentes();
+
+cursos = leerCursos();
+if (cursos.length > 0) {
+  cursoActual = cursos[0];   // arranca con el primer curso
+}
+dibujarCursos();
+mostrarGrilla();
+</script>
+
+
+<!-- ================= JAVASCRIPT DEL CHATBOT ================= -->
+<script>
+var btnAyuda = document.getElementById("btnAyuda");
+var btnCerrar = document.getElementById("btnCerrar");
+var chatContainer = document.getElementById("chatContainer");
+var chatForm = document.getElementById("chatForm");
+var mensajeInput = document.getElementById("mensajeInput");
+var chatBox = document.getElementById("chatBox");
+
+// Abrir y cerrar el chat
+btnAyuda.onclick = function () {
+  chatContainer.classList.toggle("activo");
+  if (chatContainer.classList.contains("activo")) {
+    mensajeInput.focus();
+  }
+};
+
+btnCerrar.onclick = function () {
+  chatContainer.classList.remove("activo");
+};
+
+// Agrega un mensaje al chat
+function agregarMensaje(texto, remitente) {
+  var div = document.createElement("div");
+  div.className = "mensaje " + remitente;
+
+  if (remitente == "usuario") {
+    div.textContent = texto;   // lo que escribe el usuario va como texto simple
+  } else {
+    div.innerHTML = texto;     // el bot puede devolver negritas
+  }
+
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Envía la pregunta al servidor
+function enviarConsulta(mensaje) {
+  agregarMensaje(mensaje, "usuario");
+
+  var formData = new FormData();
+  formData.append("mensaje", mensaje);
+
+  // Ajusta la ruta a api_chat.php según donde esté tu archivo backend
+  fetch("../api_chat.php", { method: "POST", body: formData })
+    .then(function (respuesta) {
+      if (!respuesta.ok) {
+        throw new Error("Error en servidor");
+      }
+      return respuesta.json();
+    })
+    .then(function (datos) {
+      agregarMensaje(datos.respuesta, "bot");
+    })
+    .catch(function () {
+      agregarMensaje("Error al conectar con el asistente.", "bot");
+    });
+}
+
+chatForm.onsubmit = function (e) {
+  e.preventDefault();
+  var mensaje = mensajeInput.value.trim();
+  if (mensaje != "") {
+    enviarConsulta(mensaje);
+    mensajeInput.value = "";
+  }
+};
+
+// Botones de pruebas rápidas
+function ejecutarPrueba(pregunta) {
+  enviarConsulta(pregunta);
+}
 </script>
 
 </body>
 </html>
-<!-- Componente Flotante del Chatbot -->
-<div class="ayuda" id="btnAyuda" title="Asistente de ayuda">?</div>
-
-<div class="chat-container" id="chatContainer">
-    <div class="chat-header">
-        <h3>Asistente de Horarios</h3>
-        <button class="btn-cerrar" id="btnCerrar" type="button">&times;</button>
-    </div>
-    
-    <div class="chat-box" id="chatBox">
-        <div class="mensaje bot">¡Hola! Puedes hacerme preguntas sobre docentes como <strong>María Galarza</strong> o <strong>Juan Pérez</strong>.</div>
-    </div>
-
-    <form id="chatForm" class="input-group">
-        <input type="text" id="mensajeInput" placeholder="Ej: Salón de Maria Galarza" required autocomplete="off">
-        <button type="submit" class="btn-enviar">Enviar</button>
-    </form>
-
-    <div class="pruebas">
-        <p>Pruebas rápidas:</p>
-        <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué grupo está asignada Maria Galarza?')">Grupo</button>
-        <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué salón se encuentra Maria Galarza?')">Salón</button>
-        <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿Qué horarios tiene tomados Maria Galarza?')">Horarios</button>
-        <button class="btn-prueba" type="button" onclick="ejecutarPrueba('Necesito sugerencias de horarios libres para mover una hora con Maria Galarza')">Sugerir libre</button>
-    </div>
-</div>
-
-<!-- Estilos CSS requeridos para el Chat Modal -->
-<style>
-    .ayuda {
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 24px !important;
-        width: 38px !important;
-        height: 38px !important;
-        border-radius: 50% !important;
-        background: #2b2b2b !important;
-        color: #fff !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 16px !important;
-        cursor: pointer !important;
-        z-index: 99999 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        user-select: none !important;
-    }
-
-    .chat-container {
-        position: fixed !important;
-        bottom: 70px !important;
-        right: 24px !important;
-        width: 350px !important;
-        max-width: 90vw !important;
-        background: #ffffff !important;
-        border-radius: 10px !important;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
-        display: none;
-        flex-direction: column !important;
-        z-index: 99998 !important;
-        overflow: hidden !important;
-        border: 1px solid #ccc !important;
-    }
-
-    .chat-container.activo {
-        display: flex !important;
-    }
-
-    .chat-header {
-        background: #283e53;
-        color: white;
-        padding: 10px 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .chat-header h3 {
-        margin: 0;
-        font-size: 14px;
-    }
-
-    .btn-cerrar {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 18px;
-        cursor: pointer;
-    }
-
-    .chat-box {
-        height: 260px;
-        padding: 10px;
-        overflow-y: auto;
-        background: #fdfdfd;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .mensaje {
-        padding: 8px 12px;
-        border-radius: 8px;
-        max-width: 85%;
-        line-height: 1.3;
-        word-wrap: break-word;
-        font-size: 12px;
-    }
-
-    .usuario {
-        align-self: flex-end;
-        background: #007bff;
-        color: white;
-        border-bottom-right-radius: 0;
-    }
-
-    .bot {
-        align-self: flex-start;
-        background: #e9ecef;
-        color: #212529;
-        border-bottom-left-radius: 0;
-    }
-
-    .input-group {
-        display: flex;
-        padding: 8px;
-        border-top: 1px solid #eee;
-        background: #fff;
-        gap: 6px;
-    }
-
-    .input-group input[type="text"] {
-        flex: 1;
-        padding: 6px 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 12px;
-    }
-
-    .input-group button.btn-enviar {
-        padding: 6px 12px;
-        background: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    .pruebas {
-        padding: 6px 8px;
-        border-top: 1px solid #eee;
-        background: #f8f9fa;
-    }
-
-    .pruebas p {
-        margin: 0 0 4px 0;
-        font-size: 10px;
-        color: #666;
-        font-weight: bold;
-    }
-
-    .btn-prueba {
-        background: #17a2b8;
-        color: white;
-        border: none;
-        padding: 3px 6px;
-        margin: 2px;
-        border-radius: 3px;
-        font-size: 10px;
-        cursor: pointer;
-    }
-</style>
-
-<!-- Lógica de Control JavaScript -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btnAyuda = document.getElementById('btnAyuda');
-    const btnCerrar = document.getElementById('btnCerrar');
-    const chatContainer = document.getElementById('chatContainer');
-    const chatForm = document.getElementById('chatForm');
-    const mensajeInput = document.getElementById('mensajeInput');
-    const chatBox = document.getElementById('chatBox');
-
-    if (btnAyuda && chatContainer) {
-        btnAyuda.addEventListener('click', (e) => {
-            e.preventDefault();
-            chatContainer.classList.toggle('activo');
-            if (chatContainer.classList.contains('activo')) {
-                mensajeInput.focus();
-            }
-        });
-
-        btnCerrar.addEventListener('click', () => {
-            chatContainer.classList.remove('activo');
-        });
-
-        function agregarMensaje(texto, remitente) {
-            const div = document.createElement('div');
-            div.className = 'mensaje ' + remitente;
-            div.innerHTML = texto;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function enviarConsulta(mensaje) {
-            agregarMensaje(mensaje, 'usuario');
-            
-            const formData = new FormData();
-            formData.append('mensaje', mensaje);
-
-            // Ajusta la ruta a api_chat.php según la ubicación de tu archivo backend
-            fetch('../api_chat.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Error en servidor');
-                return response.json();
-            })
-            .then(data => {
-                agregarMensaje(data.respuesta, 'bot');
-            })
-            .catch(() => {
-                agregarMensaje('Error al conectar con el asistente.', 'bot');
-            });
-        }
-
-        chatForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const mensaje = mensajeInput.value.trim();
-            if (mensaje) {
-                enviarConsulta(mensaje);
-                mensajeInput.value = '';
-            }
-        });
-
-        window.ejecutarPrueba = function(pregunta) {
-            mensajeInput.value = pregunta;
-            chatForm.dispatchEvent(new Event('submit'));
-        };
-    }
-});
-</script>
