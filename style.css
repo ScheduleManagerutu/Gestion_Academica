@@ -259,6 +259,98 @@ tbody td.ocupada {
   margin-top: 24px;
 }
 
+/* ================= GRILLA DE TAMAÑO FIJO ================= */
+/* Las columnas y las filas no cambian de tamaño al asignar un docente */
+#tabla-horario, table.grilla {
+  table-layout: fixed;
+}
+#tabla-horario thead th:first-child, table.grilla thead th:first-child {
+  width: 110px;
+}
+tbody td.celda, tbody td.ocupada, tbody td.vacia {
+  height: 56px;
+  padding: 6px 10px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+/* Si el nombre es muy largo se corta con "..." en lugar de agrandar la celda */
+tbody td.celda span, tbody td.celda small,
+tbody td.ocupada span, tbody td.ocupada small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tbody td.celda small, tbody td.ocupada small {
+  font-weight: normal;
+  font-size: 11px;
+  color: #4f8a55;
+}
+
+/* Datos extra en las listas del sidebar (materia del docente, alumnos del curso) */
+.item-filtro .detalle-item {
+  font-size: 11px;
+  color: #999;
+  font-weight: normal;
+  max-width: 70px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ================= FORMULARIO PARA AGREGAR DOCENTE ================= */
+.modal-fondo {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+.modal-fondo.activo {
+  display: flex;
+}
+.modal-caja {
+  background: #fffdf9;
+  border-radius: 10px;
+  padding: 20px 22px;
+  width: 340px;
+  max-width: 90vw;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.modal-caja h3 {
+  font-size: 16px;
+  margin: 0 0 14px 0;
+}
+.modal-caja label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+.modal-caja input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.modal-error {
+  color: #c9302c;
+  font-size: 12px;
+  min-height: 16px;
+  margin-bottom: 8px;
+}
+.modal-botones {
+  display: flex;
+  gap: 10px;
+}
+
 /* Bloque de curso */
 .curso-bloque {
   background: #fffdf9;

@@ -46,7 +46,6 @@
     <div class="barra-filtros">
       <button class="btn-limpiar" onclick="limpiarFiltros()">Limpiar filtros</button>
       <button class="btn-borrar" onclick="borrarFiltrados()">Borrar horarios del filtro</button>
-      <button class="btn-limpiar" onclick="cargarEjemplo()">Cargar datos de ejemplo</button>
     </div>
 
     <!-- Lista de horarios guardados -->
@@ -62,7 +61,8 @@
             <th>NOMBRE</th>
             <th>TURNO</th>
             <th>GRUPO</th>
-            <th>FECHA</th>
+            <th>ALUMNOS</th>
+            <th>CLASES</th>
             <th>ACCIONES</th>
           </tr>
         </thead>
@@ -79,24 +79,69 @@
 
 
 <script>
-// Las grillas se guardan en localStorage con este nombre.
-// La página vista_creación-horarios.html las guarda con el mismo nombre.
-var NOMBRE_GUARDADO = "grillas_horarios";
+// Archivo PHP que habla con la base de datos (ajusta la ruta si hace falta)
+var API = "../api_horarios.php";
 
-// Turnos disponibles (el valor es el mismo que se guarda al crear el horario)
+var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+// Turnos disponibles (el valor es el mismo que se guarda en la base de datos)
 var TURNOS = [
   { valor: "Matutino",   etiqueta: "Turno 1 (Matutino)" },
   { valor: "Vespertino", etiqueta: "Turno 3 (Vespertino)" },
   { valor: "Nocturno",   etiqueta: "Turno 5 (Nocturno)" }
 ];
 
-var grillas = [];        // todas las grillas guardadas
-var listaGrupos = [];    // grupos que existen en las grillas
-var turnoElegido = "";   // "" significa "Todos"
-var grupoElegido = "";   // "" significa "Todos"
+// Horas de cada turno. Tienen que ser iguales a las de vista_creación-horarios.html
+var FILAS_TURNO = {
+  "Matutino": [
+    { hora: "07:30 - 08:15", tipo: "clase" },
+    { hora: "08:15 - 09:00", tipo: "clase" },
+    { hora: "09:00 - 09:05", tipo: "receso" },
+    { hora: "09:05 - 09:50", tipo: "clase" },
+    { hora: "09:50 - 10:35", tipo: "clase" },
+    { hora: "10:35 - 10:40", tipo: "receso" },
+    { hora: "10:40 - 11:25", tipo: "clase" },
+    { hora: "11:25 - 12:10", tipo: "clase" },
+    { hora: "12:10 - 12:15", tipo: "receso" },
+    { hora: "12:15 - 13:00", tipo: "clase" },
+    { hora: "13:00 - 13:05", tipo: "receso" },
+    { hora: "13:05 - 13:50", tipo: "clase" }
+  ],
+  "Vespertino": [
+    { hora: "13:05 - 13:50", tipo: "clase" },
+    { hora: "13:50 - 14:35", tipo: "clase" },
+    { hora: "14:35 - 14:40", tipo: "receso" },
+    { hora: "14:40 - 15:25", tipo: "clase" },
+    { hora: "15:25 - 16:10", tipo: "clase" },
+    { hora: "16:10 - 16:15", tipo: "receso" },
+    { hora: "16:15 - 17:00", tipo: "clase" },
+    { hora: "17:00 - 17:45", tipo: "clase" },
+    { hora: "17:45 - 17:50", tipo: "receso" },
+    { hora: "17:50 - 18:35", tipo: "clase" },
+    { hora: "18:35 - 19:20", tipo: "clase" }
+  ],
+  "Nocturno": [
+    { hora: "17:50 - 18:35", tipo: "clase" },
+    { hora: "18:35 - 19:20", tipo: "clase" },
+    { hora: "19:20 - 20:00", tipo: "clase" },
+    { hora: "20:00 - 20:05", tipo: "receso" },
+    { hora: "20:05 - 20:45", tipo: "clase" },
+    { hora: "20:45 - 21:25", tipo: "clase" },
+    { hora: "21:25 - 21:30", tipo: "receso" },
+    { hora: "21:30 - 22:10", tipo: "clase" },
+    { hora: "22:10 - 22:15", tipo: "receso" },
+    { hora: "22:15 - 22:55", tipo: "clase" },
+    { hora: "22:55 - 23:35", tipo: "clase" }
+  ]
+};
+
+var horariosGuardados = [];   // cursos con horario guardado (vienen de la base de datos)
+var listaCursos = [];         // nombres de curso sin repetir
+var turnoElegido = "";        // "" significa "Todos"
+var cursoElegido = "";        // "" significa "Todos"
 
 
-// Cambia los símbolos < > & para que un nombre raro no rompa la página
+// Cambia los símbolos < > & para que un texto raro no rompa la página
 function limpiar(texto) {
   texto = String(texto);
   texto = texto.replace(/&/g, "&amp;");
@@ -106,35 +151,66 @@ function limpiar(texto) {
 }
 
 
-// 1) Leer las grillas guardadas
-function leerGrillas() {
-  var texto = localStorage.getItem(NOMBRE_GUARDADO);
-  if (texto == null) {
-    grillas = [];
-  } else {
-    grillas = JSON.parse(texto);
+// ---------- COMUNICACIÓN CON LA BASE DE DATOS ----------
+
+// Envía un pedido a api_horarios.php y devuelve la respuesta
+function llamarApi(accion, datos) {
+  var formData = new FormData();
+  formData.append("accion", accion);
+  for (var clave in datos) {
+    formData.append(clave, datos[clave]);
   }
+
+  return fetch(API, { method: "POST", body: formData })
+    .then(function (respuesta) {
+      return respuesta.json().catch(function () {
+        throw new Error("El servidor no respondió como se esperaba. Revisa que api_horarios.php esté en la ruta correcta y que la página se abra desde el servidor (no como archivo).");
+      });
+    })
+    .then(function (json) {
+      if (!json.ok) {
+        throw new Error(json.error);
+      }
+      return json;
+    });
+}
+
+function mostrarError(error) {
+  alert(error.message);
+}
+
+// Vuelve a leer los horarios de la base de datos y redibuja todo
+function recargar() {
+  llamarApi("listar_horarios", {})
+    .then(function (datos) {
+      horariosGuardados = datos.horarios;
+      armarListaCursos();
+      dibujarFiltros();
+      mostrarTabla();
+    })
+    .catch(mostrarError);
 }
 
 
-// 2) Armar la lista de grupos sin repetir
-function armarListaGrupos() {
-  listaGrupos = [];
-  for (var i = 0; i < grillas.length; i++) {
-    if (listaGrupos.indexOf(grillas[i].grupo) == -1) {
-      listaGrupos.push(grillas[i].grupo);
+// ---------- FILTROS ----------
+
+// Arma la lista de cursos sin repetir
+function armarListaCursos() {
+  listaCursos = [];
+  for (var i = 0; i < horariosGuardados.length; i++) {
+    if (listaCursos.indexOf(horariosGuardados[i].curso) == -1) {
+      listaCursos.push(horariosGuardados[i].curso);
     }
   }
-  listaGrupos.sort();
+  listaCursos.sort();
 
-  // Si el grupo elegido ya no existe, volver a "Todos"
-  if (listaGrupos.indexOf(grupoElegido) == -1) {
-    grupoElegido = "";
+  // Si el curso elegido ya no existe, volver a "Todos"
+  if (listaCursos.indexOf(cursoElegido) == -1) {
+    cursoElegido = "";
   }
 }
 
-
-// 3) Dibujar los filtros del sidebar
+// Dibuja los filtros del sidebar
 function dibujarFiltros() {
   // Turnos
   var html = "";
@@ -150,17 +226,17 @@ function dibujarFiltros() {
   }
   document.getElementById("lista-turnos").innerHTML = html;
 
-  // Grupos
+  // Grupos (cursos)
   html = "";
   clase = "item-filtro";
-  if (grupoElegido == "") { clase += " activo"; }
+  if (cursoElegido == "") { clase += " activo"; }
   html += '<div class="' + clase + '" onclick="elegirGrupo(-1)"><span class="bullet">●</span> Todos</div>';
 
-  for (var g = 0; g < listaGrupos.length; g++) {
+  for (var g = 0; g < listaCursos.length; g++) {
     clase = "item-filtro";
-    if (listaGrupos[g] == grupoElegido) { clase += " activo"; }
+    if (listaCursos[g] == cursoElegido) { clase += " activo"; }
     html += '<div class="' + clase + '" onclick="elegirGrupo(' + g + ')">';
-    html += '<span class="bullet">●</span> ' + limpiar(listaGrupos[g]);
+    html += '<span class="bullet">●</span> ' + limpiar(listaCursos[g]);
     // La × elimina el grupo (stopPropagation evita que cuente como clic en el grupo)
     html += '<span class="borrar" title="Eliminar grupo" onclick="event.stopPropagation(); borrarGrupo(' + g + ')">×</span>';
     html += '</div>';
@@ -168,8 +244,7 @@ function dibujarFiltros() {
   document.getElementById("lista-grupos").innerHTML = html;
 }
 
-
-// 4) Clic en un turno o en un grupo del sidebar
+// Clic en un turno o en un grupo del sidebar
 function elegirTurno(valor) {
   turnoElegido = valor;
   dibujarFiltros();
@@ -178,33 +253,56 @@ function elegirTurno(valor) {
 
 function elegirGrupo(indice) {
   if (indice < 0) {
-    grupoElegido = "";
+    cursoElegido = "";
   } else {
-    grupoElegido = listaGrupos[indice];
+    cursoElegido = listaCursos[indice];
   }
   dibujarFiltros();
   mostrarTabla();
 }
 
+// Dice si un horario cumple los filtros elegidos
+function coincideFiltro(h) {
+  // Si el filtro está en "Todos" (vacío), coincide siempre
+  var turnoOk = (turnoElegido == "" || h.turno == turnoElegido);
+  var cursoOk = (cursoElegido == "" || h.curso == cursoElegido);
+  return turnoOk && cursoOk;
+}
 
-// 5) Mostrar en la tabla solo las grillas que cumplan los filtros
+function limpiarFiltros() {
+  turnoElegido = "";
+  cursoElegido = "";
+  dibujarFiltros();
+  mostrarTabla();
+}
+
+
+// ---------- TABLA ----------
+
+// Muestra en la tabla solo los horarios que cumplan los filtros
 function mostrarTabla() {
   var filas = "";
   var cantidad = 0;
 
-  for (var i = 0; i < grillas.length; i++) {
-    var g = grillas[i];
+  for (var i = 0; i < horariosGuardados.length; i++) {
+    var h = horariosGuardados[i];
 
-    if (coincideFiltro(g)) {
+    if (coincideFiltro(h)) {
+      var turno = h.turno;
+      if (turno == "") {
+        turno = "Sin turno";
+      }
+
       filas += "<tr>";
-      filas += "<td>" + limpiar(g.nombre) + "</td>";
-      filas += "<td>" + limpiar(g.turno) + "</td>";
-      filas += "<td>" + limpiar(g.grupo) + "</td>";
-      filas += "<td>" + limpiar(g.fecha || "-") + "</td>";
-      filas += '<td>';
+      filas += "<td>" + limpiar(h.nombre) + "</td>";
+      filas += "<td>" + limpiar(turno) + "</td>";
+      filas += "<td>" + limpiar(h.curso) + "</td>";
+      filas += "<td>" + limpiar(h.cantidad) + "</td>";
+      filas += "<td>" + limpiar(h.clases) + "</td>";
+      filas += "<td>";
       filas += '<button class="btn-ver" onclick="verGrilla(' + i + ')">Ver grilla</button>';
       filas += '<button class="btn-borrar" onclick="borrarHorario(' + i + ')">Borrar</button>';
-      filas += '</td>';
+      filas += "</td>";
       filas += "</tr>";
       cantidad++;
     }
@@ -220,7 +318,7 @@ function mostrarTabla() {
   }
 
   // Mensaje cuando no hay nada para mostrar
-  if (grillas.length == 0) {
+  if (horariosGuardados.length == 0) {
     document.getElementById("mensaje").textContent = "Todavía no hay horarios guardados.";
   } else if (cantidad == 0) {
     document.getElementById("mensaje").textContent = "No hay horarios con ese filtro.";
@@ -232,38 +330,82 @@ function mostrarTabla() {
 }
 
 
-// 6) Mostrar la grilla completa de un horario (i = posición en la lista)
+// ---------- GRILLA COMPLETA ----------
+
+// Pide las clases del horario a la base de datos y las muestra
 function verGrilla(i) {
-  var g = grillas[i];
-  var horas = 0;
-  var cantidadDias = g.dias.length;
+  var h = horariosGuardados[i];
+
+  llamarApi("leer_grilla", { idgrupo: h.id })
+    .then(function (datos) {
+      dibujarDetalle(h, datos.clases);
+    })
+    .catch(mostrarError);
+}
+
+// Si el turno no se conoce, arma las filas con las horas que tienen clases
+function armarFilasDesdeClases(clases) {
+  var horas = [];
+  for (var i = 0; i < clases.length; i++) {
+    var hora = clases[i].inicio + " - " + clases[i].fin;
+    if (horas.indexOf(hora) == -1) {
+      horas.push(hora);
+    }
+  }
+  horas.sort();
+
+  var filas = [];
+  for (var j = 0; j < horas.length; j++) {
+    filas.push({ hora: horas[j], tipo: "clase" });
+  }
+  return filas;
+}
+
+function dibujarDetalle(h, clases) {
+  // Guardar cada clase en un mapa: "Lunes|07:30 - 08:15" -> clase
+  var mapa = {};
+  for (var k = 0; k < clases.length; k++) {
+    mapa[clases[k].dia + "|" + clases[k].inicio + " - " + clases[k].fin] = clases[k];
+  }
+
+  var filasDef = FILAS_TURNO[h.turno];
+  if (!filasDef) {
+    filasDef = armarFilasDesdeClases(clases);
+  }
 
   // Fila de títulos (HORA + los días)
   var titulos = "<tr><th>HORA</th>";
-  for (var d = 0; d < cantidadDias; d++) {
-    titulos += "<th>" + limpiar(g.dias[d]).toUpperCase() + "</th>";
+  for (var d = 0; d < DIAS.length; d++) {
+    titulos += "<th>" + limpiar(DIAS[d]).toUpperCase() + "</th>";
   }
   titulos += "</tr>";
 
-  // Una fila por cada hora
+  // Una fila por cada hora del turno
   var filas = "";
-  for (var f = 0; f < g.filas.length; f++) {
-    var fila = g.filas[f];
+  var mostradas = 0;
 
-    if (fila.celdas[0] == "RECESO") {
+  for (var f = 0; f < filasDef.length; f++) {
+    var fila = filasDef[f];
+
+    if (fila.tipo == "receso") {
       filas += '<tr class="receso">';
       filas += '<td class="hora">' + limpiar(fila.hora) + '</td>';
-      filas += '<td colspan="' + cantidadDias + '">RECESO</td>';
+      filas += '<td colspan="' + DIAS.length + '">RECESO</td>';
       filas += '</tr>';
     } else {
       filas += '<tr>';
       filas += '<td class="hora">' + limpiar(fila.hora) + '</td>';
-      for (var c = 0; c < fila.celdas.length; c++) {
-        if (fila.celdas[c] != "") {
-          filas += '<td class="ocupada">' + limpiar(fila.celdas[c]) + '</td>';
-          horas++;
+      for (var c = 0; c < DIAS.length; c++) {
+        var clase = mapa[DIAS[c] + "|" + fila.hora];
+        if (clase) {
+          filas += '<td class="ocupada"><span>' + limpiar(clase.docente) + '</span>';
+          if (clase.materia) {
+            filas += '<small>' + limpiar(clase.materia) + '</small>';
+          }
+          filas += '</td>';
+          mostradas++;
         } else {
-          filas += '<td></td>';
+          filas += '<td class="vacia"></td>';
         }
       }
       filas += '</tr>';
@@ -272,11 +414,16 @@ function verGrilla(i) {
 
   var html = '<div class="curso-bloque">';
   html += '<div class="curso-header">';
-  html += '<span class="nombre">' + limpiar(g.nombre) + '</span>';
-  html += '<span class="horas-asignadas">' + horas + ' horas asignadas</span>';
+  html += '<span class="nombre">' + limpiar(h.nombre) + '</span>';
+  html += '<span class="horas-asignadas">' + mostradas + ' horas asignadas</span>';
   html += '<span class="flecha cerrar" onclick="cerrarDetalle()" title="Cerrar">✕</span>';
   html += '</div>';
-  html += '<table><thead>' + titulos + '</thead><tbody>' + filas + '</tbody></table>';
+  html += '<table class="grilla"><thead>' + titulos + '</thead><tbody>' + filas + '</tbody></table>';
+
+  // Aviso si hay clases guardadas en horas que el turno no tiene
+  if (mostradas < clases.length) {
+    html += '<div class="vacio" style="padding:12px">' + (clases.length - mostradas) + ' clase(s) guardada(s) no coinciden con las horas de este turno y no se muestran.</div>';
+  }
   html += '</div>';
 
   document.getElementById("detalle").innerHTML = html;
@@ -288,168 +435,72 @@ function cerrarDetalle() {
 }
 
 
-// 7) Borrar horarios y grupos
+// ---------- BORRAR ----------
 
-// Dice si una grilla cumple los filtros elegidos
-function coincideFiltro(g) {
-  // Si el filtro está en "Todos" (vacío), coincide siempre
-  var turnoOk = (turnoElegido == "" || g.turno == turnoElegido);
-  var grupoOk = (grupoElegido == "" || g.grupo == grupoElegido);
-  return turnoOk && grupoOk;
-}
-
-// Guarda la lista actual y vuelve a dibujar todo
-function guardarYActualizar() {
-  localStorage.setItem(NOMBRE_GUARDADO, JSON.stringify(grillas));
-  armarListaGrupos();
-  dibujarFiltros();
-  mostrarTabla();
-}
-
-// Botón "Borrar" de una fila: borra ese horario
+// Botón "Borrar" de una fila: borra el horario (las clases) de ese curso
 function borrarHorario(i) {
-  var seguro = confirm("¿Borrar el horario \"" + grillas[i].nombre + "\"? No se puede deshacer.");
+  var h = horariosGuardados[i];
+  var seguro = confirm("¿Borrar el horario \"" + h.nombre + "\" de la base de datos? No se puede deshacer.");
   if (!seguro) {
     return;
   }
-  grillas.splice(i, 1);
-  guardarYActualizar();
+
+  llamarApi("borrar_horarios", { ids: JSON.stringify([h.id]) })
+    .then(recargar)
+    .catch(mostrarError);
 }
 
 // Botón "Borrar horarios del filtro": borra todos los que se ven en la tabla
 function borrarFiltrados() {
-  var cantidad = 0;
-  for (var i = 0; i < grillas.length; i++) {
-    if (coincideFiltro(grillas[i])) {
-      cantidad++;
+  var ids = [];
+  for (var i = 0; i < horariosGuardados.length; i++) {
+    if (coincideFiltro(horariosGuardados[i])) {
+      ids.push(horariosGuardados[i].id);
     }
   }
 
-  if (cantidad == 0) {
+  if (ids.length == 0) {
     alert("No hay horarios para borrar con este filtro.");
     return;
   }
 
-  var mensaje = "¿Borrar " + cantidad + " horario(s) del filtro actual? No se puede deshacer.";
-  if (turnoElegido == "" && grupoElegido == "") {
-    mensaje = "No hay ningún filtro elegido: se borrarán TODOS los horarios guardados (" + cantidad + "). ¿Continuar?";
+  var mensaje = "¿Borrar " + ids.length + " horario(s) del filtro actual? No se puede deshacer.";
+  if (turnoElegido == "" && cursoElegido == "") {
+    mensaje = "No hay ningún filtro elegido: se borrarán TODOS los horarios guardados (" + ids.length + "). ¿Continuar?";
   }
   if (!confirm(mensaje)) {
     return;
   }
 
-  // Quedarse solo con los que NO coinciden con el filtro
-  var quedan = [];
-  for (var j = 0; j < grillas.length; j++) {
-    if (!coincideFiltro(grillas[j])) {
-      quedan.push(grillas[j]);
-    }
-  }
-  grillas = quedan;
-  guardarYActualizar();
+  llamarApi("borrar_horarios", { ids: JSON.stringify(ids) })
+    .then(recargar)
+    .catch(mostrarError);
 }
 
-// × de un grupo del sidebar: elimina el grupo y todos sus horarios
+// × de un grupo del sidebar: elimina el curso (en todos los turnos) y sus horarios
 function borrarGrupo(indice) {
-  var grupo = listaGrupos[indice];
+  var curso = listaCursos[indice];
 
-  var cantidad = 0;
-  for (var i = 0; i < grillas.length; i++) {
-    if (grillas[i].grupo == grupo) {
-      cantidad++;
+  var ids = [];
+  for (var i = 0; i < horariosGuardados.length; i++) {
+    if (horariosGuardados[i].curso == curso) {
+      ids.push(horariosGuardados[i].id);
     }
   }
 
-  var seguro = confirm("¿Eliminar el grupo " + grupo + " y sus " + cantidad + " horario(s) guardado(s)? No se puede deshacer.");
+  var seguro = confirm("¿Eliminar el grupo " + curso + " de la base de datos? Se borran el curso y sus " + ids.length + " horario(s) guardado(s). No se puede deshacer.");
   if (!seguro) {
     return;
   }
 
-  var quedan = [];
-  for (var j = 0; j < grillas.length; j++) {
-    if (grillas[j].grupo != grupo) {
-      quedan.push(grillas[j]);
-    }
-  }
-  grillas = quedan;
-  guardarYActualizar();   // si el grupo estaba elegido, vuelve a "Todos"
+  llamarApi("borrar_grupos", { ids: JSON.stringify(ids) })
+    .then(recargar)
+    .catch(mostrarError);
 }
 
 
-// 8) Botón "Limpiar filtros"
-function limpiarFiltros() {
-  turnoElegido = "";
-  grupoElegido = "";
-  dibujarFiltros();
-  mostrarTabla();
-}
-
-
-// 9) Botón de ejemplo: guarda 3 grillas de prueba
-function cargarEjemplo() {
-  // Cuidado: esto reemplaza lo que ya está guardado
-  if (grillas.length > 0) {
-    var seguir = confirm("Esto reemplaza los horarios guardados por datos de ejemplo. ¿Continuar?");
-    if (!seguir) {
-      return;
-    }
-  }
-
-  var dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-  var receso = ["RECESO", "RECESO", "RECESO", "RECESO", "RECESO"];
-
-  var ejemplo = [
-    {
-      nombre: "Horario 3MF - Matutino",
-      turno: "Matutino",
-      grupo: "3MF",
-      fecha: "2026-10-01",
-      dias: dias,
-      filas: [
-        { hora: "07:30 - 08:15", celdas: ["María Galarza", "Juan Pérez", "", "María Galarza", "Juan Pérez"] },
-        { hora: "08:15 - 09:00", celdas: ["María Galarza", "Juan Pérez", "", "María Galarza", ""] },
-        { hora: "09:00 - 09:05", celdas: receso },
-        { hora: "09:05 - 09:50", celdas: ["", "María Galarza", "Juan Pérez", "", "Juan Pérez"] }
-      ]
-    },
-    {
-      nombre: "Horario 2MF - Vespertino",
-      turno: "Vespertino",
-      grupo: "2MF",
-      fecha: "2026-10-02",
-      dias: dias,
-      filas: [
-        { hora: "13:30 - 14:15", celdas: ["Juan Pérez", "", "María Galarza", "", "Juan Pérez"] },
-        { hora: "14:15 - 15:00", celdas: ["Juan Pérez", "", "María Galarza", "", ""] }
-      ]
-    },
-    {
-      nombre: "Horario 1MF - Nocturno",
-      turno: "Nocturno",
-      grupo: "1MF",
-      fecha: "2026-10-03",
-      dias: dias,
-      filas: [
-        { hora: "17:50 - 18:35", celdas: ["María Galarza", "", "Juan Pérez", "María Galarza", ""] },
-        { hora: "18:35 - 19:20", celdas: ["María Galarza", "", "Juan Pérez", "", ""] }
-      ]
-    }
-  ];
-
-  localStorage.setItem(NOMBRE_GUARDADO, JSON.stringify(ejemplo));
-  iniciar();
-}
-
-
-// 10) Lo que se hace al abrir la página
-function iniciar() {
-  leerGrillas();
-  armarListaGrupos();
-  dibujarFiltros();
-  mostrarTabla();
-}
-
-iniciar();
+// Al abrir la página: leer los horarios de la base de datos
+recargar();
 </script>
 
 </body>

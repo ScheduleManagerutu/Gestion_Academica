@@ -1,53 +1,7 @@
--- MySQL dump 10.13  Distrib 8.4.11, for Linux (x86_64)
---
--- Host: localhost    Database: BD Web
--- ------------------------------------------------------
--- Server version	8.4.11-0ubuntu0.26.04.1
+CREATE DATABASE `BD Web` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+-- `BD Web`.Docente definition
 
---
--- Table structure for table `Administrativo`
---
-
-DROP TABLE IF EXISTS `Administrativo`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Administrativo` (
-  `IDadministrativo` int NOT NULL AUTO_INCREMENT,
-  `Correo` varchar(100) NOT NULL,
-  `Contraseña` varchar(225) NOT NULL,
-  `Usuario` varchar(100) NOT NULL,
-  PRIMARY KEY (`IDadministrativo`),
-  UNIQUE KEY `Administrativo_UNIQUE` (`Correo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Administrativo`
---
-
-LOCK TABLES `Administrativo` WRITE;
-/*!40000 ALTER TABLE `Administrativo` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Administrativo` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `Docente`
---
-
-DROP TABLE IF EXISTS `Docente`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Docente` (
   `IDdocente` int NOT NULL AUTO_INCREMENT,
   `Documento` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -57,79 +11,95 @@ CREATE TABLE `Docente` (
   PRIMARY KEY (`IDdocente`),
   CONSTRAINT `Docente_Materia_FK` FOREIGN KEY (`IDdocente`) REFERENCES `Materia` (`IDmateria`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Tabla de información docente';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `Docente`
---
+-- `BD Web`.Gestion_Usuario_Docente definition
 
-LOCK TABLES `Docente` WRITE;
-/*!40000 ALTER TABLE `Docente` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Docente` ENABLE KEYS */;
-UNLOCK TABLES;
+CREATE TABLE `Gestion_Usuario_Docente` (
+  `IDusuario` int NOT NULL,
+  `IDdocente` int NOT NULL,
+  PRIMARY KEY (`IDusuario`,`IDdocente`),
+  KEY `FK_Docente` (`IDdocente`),
+  CONSTRAINT `FK_Docente` FOREIGN KEY (`IDdocente`) REFERENCES `Docente` (`IDdocente`),
+  CONSTRAINT `FK_Usuario` FOREIGN KEY (`IDusuario`) REFERENCES `Usuario` (`IDusuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Table structure for table `Materia`
---
+-- `BD Web`.Gestion_Usuario_Grupo definition
 
-DROP TABLE IF EXISTS `Materia`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Gestion_Usuario_Grupo` (
+  `IDusuario` int NOT NULL,
+  `IDgrupo` int NOT NULL,
+  PRIMARY KEY (`IDusuario`,`IDgrupo`),
+  KEY `FK_IDgrupo` (`IDgrupo`),
+  CONSTRAINT `FK_IDgrupo` FOREIGN KEY (`IDgrupo`) REFERENCES `Grupo` (`IDgrupo`),
+  CONSTRAINT `FK_IDusuario` FOREIGN KEY (`IDusuario`) REFERENCES `Usuario` (`IDusuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- `BD Web`.Gestion_Usuario_Materia definition
+
+CREATE TABLE `Gestion_Usuario_Materia` (
+  `IDusuario` int NOT NULL,
+  `IDmateria` int NOT NULL,
+  PRIMARY KEY (`IDusuario`,`IDmateria`),
+  KEY `FK_IDmateria` (`IDmateria`),
+  CONSTRAINT `FK_IDmateria` FOREIGN KEY (`IDmateria`) REFERENCES `Materia` (`IDmateria`),
+  CONSTRAINT `FK_IDuusuario` FOREIGN KEY (`IDusuario`) REFERENCES `Usuario` (`IDusuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- `BD Web`.Grupo definition
+
+CREATE TABLE `Grupo` (
+  `IDgrupo` int NOT NULL AUTO_INCREMENT,
+  `Nombre` varchar(100) NOT NULL,
+  `Cantidad_alumnos` int NOT NULL,
+  `IDdocente` int NOT NULL,
+  PRIMARY KEY (`IDgrupo`),
+  CONSTRAINT `Grupo_Docente_FK` FOREIGN KEY (`IDgrupo`) REFERENCES `Docente` (`IDdocente`),
+  CONSTRAINT `alumnos_chek` CHECK ((`Cantidad_alumnos` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- `BD Web`.Materia definition
+
 CREATE TABLE `Materia` (
   `IDmateria` int NOT NULL AUTO_INCREMENT,
   `Nombre` varchar(100) NOT NULL,
-  `Horas_semana` datetime NOT NULL,
+  `Horas_semana` decimal(5,2) DEFAULT NULL,
   PRIMARY KEY (`IDmateria`),
-  CONSTRAINT `Materia_chk_1` CHECK ((`Horas_semana` >= 0))
+  CONSTRAINT `Materia_chk_1` CHECK ((`Horas_semana` >= '0000-00-00 00:00:00'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `Materia`
---
+-- `BD Web`.Turnos definition
 
-LOCK TABLES `Materia` WRITE;
-/*!40000 ALTER TABLE `Materia` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Materia` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `Turnos`
---
-
-DROP TABLE IF EXISTS `Turnos`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Turnos` (
   `IDTurno` int NOT NULL,
   `Cursos` varchar(100) NOT NULL,
   `Horarios` datetime NOT NULL,
   `Hora_inicio` datetime NOT NULL,
   `Hora_fin` datetime NOT NULL,
-  PRIMARY KEY (`IDTurno`)
+  `Dia` date NOT NULL,
+  PRIMARY KEY (`IDTurno`),
+  CONSTRAINT `Turnos_Materia_FK` FOREIGN KEY (`IDTurno`) REFERENCES `Materia` (`IDmateria`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `Turnos`
---
+-- `BD Web`.Usuario definition
 
-LOCK TABLES `Turnos` WRITE;
-/*!40000 ALTER TABLE `Turnos` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Turnos` ENABLE KEYS */;
-UNLOCK TABLES;
+CREATE TABLE `Usuario` (
+  `IDusuario` int NOT NULL AUTO_INCREMENT,
+  `Correo` varchar(100) NOT NULL,
+  `Contraseña` varchar(225) NOT NULL,
+  `Usuario` varchar(100) NOT NULL,
+  PRIMARY KEY (`IDusuario`),
+  UNIQUE KEY `Administrativo_UNIQUE` (`Correo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping routines for database 'BD Web'
---
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2026-09-04 13:24:06
+CREATE TABLE Clases_Asignadas (
+    IDclase INT AUTO_INCREMENT PRIMARY KEY,
+    IDgrupo INT,
+    Dia VARCHAR(20) NOT NULL,
+    Hora_inicio TIME NOT NULL,
+    Hora_fin TIME NOT NULL,
+    IDmateria INT,
+    IDdocente INT,
+    FOREIGN KEY (IDgrupo) REFERENCES Grupo(IDgrupo),
+    FOREIGN KEY (IDmateria) REFERENCES Materia(IDmateria),
+    FOREIGN KEY (IDdocente) REFERENCES Docente(IDdocente)
+);
