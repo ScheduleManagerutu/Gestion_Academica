@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Crear horarios</title>
-  
   <!-- CSS de Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
@@ -14,38 +13,41 @@
 
   <!-- Sidebar -->
   <aside class="sidebar">
+    <!-- Botón para volver al menú inicial -->
+    <a href="index.php" class="btn-volver" onclick="return confirmarSalida()">← Volver al menú</a>
+
     <div class="seccion">
       <div class="seccion-titulo">
-        DOCENTES
-        <span class="agregar">+</span>
+        MATERIAS
+        <span class="agregar" onclick="agregarDocente()" title="Agregar materia y su docente">+</span>
       </div>
-      <div class="item-filtro activo">
-        <span class="bullet">●</span> Todos
+      <div class="item-filtro activo" id="docente-todos" onclick="seleccionarDocente(-1)">
+        <span class="bullet">●</span> Ninguno
       </div>
+      <!-- Aquí JavaScript dibuja los docentes de la base de datos -->
+      <div id="lista-docentes"></div>
     </div>
 
     <div class="seccion">
       <div class="seccion-titulo">
         CURSOS
-        <span class="agregar">+</span>
+        <span class="agregar" onclick="agregarCurso()" title="Agregar curso">+</span>
       </div>
-      <div class="item-filtro">
-        3°MF <span class="horas" id="horas-sidebar">0 hs</span>
-      </div>
+      <!-- Aquí JavaScript dibuja los cursos del turno elegido -->
+      <div id="lista-cursos"></div>
     </div>
 
-    <!-- SECCIÓN TURNO -->
+    <!-- TURNOS: el valor de data-turno es el mismo que se guarda en la base de datos -->
     <div class="seccion" id="seccion-turnos">
-      <div class="seccion-titulo">
-        TURNO
-      </div>
-      <div class="item-filtro turno activo" data-turno="1" onclick="seleccionarTurno(this)">
+      <div class="seccion-titulo">TURNO</div>
+
+      <div class="item-filtro turno activo" data-turno="Matutino" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 1 (Matutino)
       </div>
-      <div class="item-filtro turno" data-turno="3" onclick="seleccionarTurno(this)">
+      <div class="item-filtro turno" data-turno="Vespertino" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 3 (Vespertino)
       </div>
-      <div class="item-filtro turno" data-turno="5" onclick="seleccionarTurno(this)">
+      <div class="item-filtro turno" data-turno="Nocturno" onclick="seleccionarTurno(this)">
         <span class="bullet">●</span> Turno 5 (Nocturno)
       </div>
     </div>
@@ -61,14 +63,26 @@
     <div class="titulo-seccion">
       <div>
         <h2>Grillas por Curso</h2>
-        <div class="subtitulo">Una grilla por curso · Haz clic en una celda para asignar o editar un docente</div>
+        <div class="subtitulo">Elige una materia en la barra lateral y haz clic en una celda para asignarla</div>
       </div>
-      <div class="badge-cursos">1 cursos</div>
+      <div class="badges">
+        <div class="badge-cursos" id="badge-cursos">0 cursos</div>
+        <div class="badge-cursos" id="badge-docentes">0 materias</div>
+      </div>
+    </div>
+
+    <!-- Curso elegido y botones de guardado -->
+    <div class="barra-guardar">
+      Curso: <b id="curso-activo">ninguno</b>
+      <button class="btn-guardar" onclick="guardarHorario()">Guardar horario</button>
+      <button class="btn-limpiar" onclick="limpiarGrilla()">Limpiar grilla</button>
+      <span id="info-docente"></span>
+      <span id="aviso"></span>
     </div>
 
     <div class="curso-bloque">
       <div class="curso-header">
-        <span class="nombre" id="curso-nombre">3°MF - Turno 1 (Matutino)</span>
+        <span class="nombre" id="curso-nombre">(sin curso) - Matutino</span>
         <span class="horas-asignadas" id="horas-header">0 horas asignadas</span>
         <span class="flecha">▾</span>
       </div>
@@ -84,138 +98,900 @@
             <th>VIERNES</th>
           </tr>
         </thead>
-        <tbody id="cuerpo-tabla">
-          <!-- El contenido se generará dinámicamente con JavaScript -->
-        </tbody>
+        <!-- Las filas las dibuja JavaScript según el turno -->
+        <tbody id="cuerpo-tabla" onclick="clicTabla(event)"></tbody>
       </table>
     </div>
   </main>
 
 </div>
 
-<div class="ayuda">?</div>
 
-<!-- LÓGICA JAVASCRIPT -->
+<!-- ================= FORMULARIO PARA AGREGAR DOCENTE ================= -->
+<div class="modal-fondo" id="modal-docente" onclick="if (event.target == this) { cerrarFormDocente(); }">
+  <form class="modal-caja" onsubmit="guardarDocente(event)">
+    <h3>Agregar materia y docente</h3>
+
+    <label for="docente-materia">Materia</label>
+    <input type="text" id="docente-materia" maxlength="100" list="lista-materias" autocomplete="off">
+    <!-- Sugerencias con las materias que ya existen en la base de datos -->
+    <datalist id="lista-materias"></datalist>
+
+    <label for="docente-nombre">Nombre del docente</label>
+    <input type="text" id="docente-nombre" maxlength="100" autocomplete="off">
+
+    <label for="docente-documento">Documento de identidad (cédula uruguaya)</label>
+    <input type="text" id="docente-documento" maxlength="20" placeholder="Ej: 1.234.567-2" autocomplete="off">
+
+    <div class="modal-error" id="docente-error"></div>
+
+    <div class="modal-botones">
+      <button type="submit" class="btn-guardar">Guardar</button>
+      <button type="button" class="btn-limpiar" onclick="cerrarFormDocente()">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+
+<!-- ================= CHATBOT ================= -->
+<div class="ayuda" id="btnAyuda" title="Asistente de ayuda">?</div>
+
+<div class="chat-container" id="chatContainer">
+  <div class="chat-header">
+    <h3>Asistente de Horarios</h3>
+    <button class="btn-cerrar" id="btnCerrar" type="button">&times;</button>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="mensaje bot">¡Hola! Puedes hacerme preguntas sobre docentes como <strong>María Galarza</strong> o <strong>Juan Pérez</strong>.</div>
+  </div>
+
+  <form id="chatForm" class="input-group">
+    <input type="text" id="mensajeInput" placeholder="Ej: Salón de Maria Galarza" required autocomplete="off">
+    <button type="submit" class="btn-enviar">Enviar</button>
+  </form>
+
+  <div class="pruebas">
+    <p>Pruebas rápidas:</p>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué grupo está asignada Maria Galarza?')">Grupo</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿En qué salón se encuentra Maria Galarza?')">Salón</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('¿Qué horarios tiene tomados Maria Galarza?')">Horarios</button>
+    <button class="btn-prueba" type="button" onclick="ejecutarPrueba('Necesito sugerencias de horarios libres para mover una hora con Maria Galarza')">Sugerir libre</button>
+  </div>
+</div>
+
+
+<!-- ================= JAVASCRIPT DE LA GRILLA ================= -->
 <script>
-  // Cambia la clase 'activo' en la barra lateral al hacer clic
-  function seleccionarTurno(elemento) {
-    const turnos = document.querySelectorAll('#seccion-turnos .turno');
-    turnos.forEach(t => t.classList.remove('activo'));
-    elemento.classList.add('activo');
-    aplicarTurnoAGrilla(); // Llamamos a la función automáticamente al cambiar de turno
+// Archivo PHP que habla con la base de datos (ajusta la ruta si hace falta)
+var API = "../api_horarios.php";
+
+var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+// Horas de cada turno: las manda api_horarios.php (así están escritas en un solo lugar)
+var horarios = {};
+
+var turnoActual = "Matutino";
+
+// Todo esto viene de la base de datos
+var docentes = [];          // lista de docentes
+var materias = [];          // nombres de las materias que ya existen
+var grupos = [];            // todos los cursos (grupos) de todos los turnos
+var docenteActual = null;   // docente elegido (o null si no hay)
+var grupoActual = null;     // curso elegido (o null si no hay)
+
+// Pasa a true cuando se cambia la grilla y a false cuando se guarda
+var sinGuardar = false;
+
+
+// ---------- COMUNICACIÓN CON LA BASE DE DATOS ----------
+
+// Envía un pedido a api_horarios.php y devuelve la respuesta
+function llamarApi(accion, datos) {
+  var formData = new FormData();
+  formData.append("accion", accion);
+  for (var clave in datos) {
+    formData.append(clave, datos[clave]);
   }
 
-  // Genera la grilla dinámica con casillas editables
-  function aplicarTurnoAGrilla() {
-    const turnoActivo = document.querySelector('#seccion-turnos .turno.activo');
-    if (!turnoActivo) return;
+  return fetch(API, { method: "POST", body: formData })
+    .then(function (respuesta) {
+      return respuesta.json().catch(function () {
+        throw new Error("El servidor no respondió como se esperaba. Revisa que api_horarios.php esté en la ruta correcta y que la página se abra desde el servidor (no como archivo).");
+      });
+    })
+    .then(function (json) {
+      if (!json.ok) {
+        throw new Error(json.error);
+      }
+      return json;
+    });
+}
 
-    const nombreTurno = turnoActivo.textContent.trim().replace('●', '').trim();
-    const idTurno = turnoActivo.getAttribute('data-turno');
-    const nombreCurso = `3°MF`; // Dinámico a futuro
+function mostrarError(error) {
+  alert(error.message);
+}
 
-    // 1. Actualizar el título
-    document.getElementById('curso-nombre').innerText = `${nombreCurso} - ${nombreTurno}`;
+// Busca en una lista el elemento que tenga el mismo id (o devuelve null)
+function buscarPorId(lista, elemento) {
+  if (elemento == null) {
+    return null;
+  }
+  for (var i = 0; i < lista.length; i++) {
+    if (lista[i].id == elemento.id) {
+      return lista[i];
+    }
+  }
+  return null;
+}
 
-    // 2. Definir horarios completos según el turno
-    const horariosPorTurno = {
-      "1": [ // Matutino completo
-        { hora: "07:30 - 08:15", tipo: "clase" },
-        { hora: "08:15 - 09:00", tipo: "clase" },
-        { hora: "09:00 - 09:05", tipo: "receso" },
-        { hora: "09:05 - 09:50", tipo: "clase" },
-        { hora: "09:50 - 10:35", tipo: "clase" },
-        { hora: "10:35 - 10:40", tipo: "receso" },
-        { hora: "10:40 - 11:25", tipo: "clase" },
-        { hora: "11:25 - 12:10", tipo: "clase" },
-        { hora: "12:10 - 12:15", tipo: "receso" },
-        { hora: "12:15 - 13:00", tipo: "clase" },
-        { hora: "13:00 - 13:05", tipo: "receso" },
-        { hora: "13:05 - 13:50", tipo: "clase" }
-      ],
-      "3": [ // Vespertino (Ajusta los horarios según tu instituto)
-        { hora: "13:30 - 14:15", tipo: "clase" },
-        { hora: "14:15 - 15:00", tipo: "clase" },
-        { hora: "15:00 - 15:05", tipo: "receso" },
-        { hora: "15:05 - 15:50", tipo: "clase" },
-        { hora: "15:50 - 16:35", tipo: "clase" }
-      ],
-      "5": [ // Nocturno (Ajusta los horarios según tu instituto)
-        { hora: "18:30 - 19:15", tipo: "clase" },
-        { hora: "19:15 - 20:00", tipo: "clase" },
-        { hora: "20:00 - 20:05", tipo: "receso" },
-        { hora: "20:05 - 20:50", tipo: "clase" },
-        { hora: "20:50 - 21:35", tipo: "clase" }
-      ]
+// Lee docentes y cursos de la base de datos y los dibuja
+function cargarDatos(despues) {
+  llamarApi("listar", {})
+    .then(function (datos) {
+      docentes = datos.docentes;
+      grupos = datos.grupos;
+      materias = datos.materias;
+      horarios = datos.horas;
+      llenarMaterias();
+
+      // Si el docente o el curso elegido ya no existe, se descarta
+      docenteActual = buscarPorId(docentes, docenteActual);
+      grupoActual = buscarPorId(grupos, grupoActual);
+
+      dibujarDocentes();
+      dibujarCursos();
+
+      if (despues) {
+        despues();
+      }
+    })
+    .catch(mostrarError);
+}
+
+
+// ---------- GRILLA ----------
+
+// Cuenta las celdas con docente asignado
+function contarHoras() {
+  return document.querySelectorAll("#cuerpo-tabla td.asignada").length;
+}
+
+function actualizarHoras() {
+  document.getElementById("horas-header").textContent = contarHoras() + " horas asignadas";
+}
+
+function actualizarTitulo() {
+  var curso = "(sin curso)";
+  if (grupoActual != null) {
+    curso = grupoActual.curso;
+  }
+  document.getElementById("curso-nombre").textContent = curso + " - " + turnoActual;
+}
+
+// Escribe una materia (y su docente) dentro de una celda: la materia es lo principal
+function ponerEnCelda(celda, iddocente, idmateria, nombre, materia) {
+  celda.innerHTML = "";
+  celda.setAttribute("data-docente", iddocente);
+  if (idmateria) {
+    celda.setAttribute("data-materia", idmateria);
+  } else {
+    celda.setAttribute("data-materia", "");
+  }
+
+  // Arriba la materia (si no hubiera, el nombre del docente); abajo el docente
+  var principal = document.createElement("span");
+  principal.textContent = materia ? materia : nombre;
+  celda.appendChild(principal);
+
+  if (materia) {
+    var small = document.createElement("small");
+    small.textContent = nombre;
+    celda.appendChild(small);
+  }
+  celda.classList.add("asignada");
+
+  // La celda tiene tamaño fijo: al pasar el mouse se ve el texto completo
+  if (materia) {
+    celda.title = materia + " - " + nombre;
+  } else {
+    celda.title = nombre;
+  }
+}
+
+function vaciarCelda(celda) {
+  celda.innerHTML = "";
+  celda.removeAttribute("title");
+  celda.removeAttribute("data-docente");
+  celda.removeAttribute("data-materia");
+  celda.classList.remove("asignada");
+}
+
+// Dibuja las filas de la tabla según el turno actual
+function dibujarGrilla() {
+  var filas = horarios[turnoActual] || [];   // vacío hasta que llegan las horas de la API
+  var html = "";
+
+  for (var i = 0; i < filas.length; i++) {
+    if (filas[i].tipo == "receso") {
+      html += '<tr class="receso">';
+      html += '<td class="hora">' + filas[i].hora + '</td>';
+      html += '<td colspan="5">RECESO</td>';
+      html += '</tr>';
+    } else {
+      html += '<tr>';
+      html += '<td class="hora">' + filas[i].hora + '</td>';
+      for (var d = 0; d < 5; d++) {
+        html += '<td class="celda"></td>';
+      }
+      html += '</tr>';
+    }
+  }
+
+  document.getElementById("cuerpo-tabla").innerHTML = html;
+  actualizarTitulo();
+  actualizarHoras();
+  sinGuardar = false;
+}
+
+// Pone en la tabla las clases que vienen de la base de datos
+function llenarGrilla(clases) {
+  var filasTabla = document.getElementById("cuerpo-tabla").rows;
+
+  for (var k = 0; k < clases.length; k++) {
+    var clase = clases[k];
+    var hora = clase.inicio + " - " + clase.fin;
+    var columna = DIAS.indexOf(clase.dia);
+
+    if (columna == -1) {
+      continue;
+    }
+
+    for (var i = 0; i < filasTabla.length; i++) {
+      if (filasTabla[i].className != "receso" && filasTabla[i].cells[0].textContent == hora) {
+        ponerEnCelda(filasTabla[i].cells[columna + 1], clase.iddocente, clase.idmateria, clase.docente, clase.materia);
+      }
+    }
+  }
+  actualizarHoras();
+}
+
+// Dibuja la grilla vacía y le carga lo guardado en la base de datos
+function mostrarGrilla() {
+  dibujarGrilla();
+  mostrarAviso("");
+
+  if (grupoActual == null) {
+    return;
+  }
+
+  var idPedido = grupoActual.id;
+  llamarApi("leer_grilla", { idgrupo: idPedido })
+    .then(function (datos) {
+      // Si mientras tanto se eligió otro curso, no se llena la tabla
+      if (grupoActual != null && grupoActual.id == idPedido) {
+        llenarGrilla(datos.clases);
+      }
+    })
+    .catch(mostrarError);
+}
+
+// Se ejecuta al hacer clic en un turno del sidebar
+function seleccionarTurno(elemento) {
+  var nuevoTurno = elemento.getAttribute("data-turno");
+
+  if (nuevoTurno == turnoActual) {
+    return;
+  }
+
+  if (sinGuardar) {
+    var seguir = confirm("Hay cambios sin guardar en la grilla. Si cambias de turno se pierden. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  var turnos = document.querySelectorAll("#seccion-turnos .turno");
+  for (var i = 0; i < turnos.length; i++) {
+    turnos[i].classList.remove("activo");
+  }
+  elemento.classList.add("activo");
+
+  turnoActual = nuevoTurno;
+
+  // Elegir el primer curso de este turno (o ninguno)
+  var delTurno = gruposDelTurno();
+  if (delTurno.length > 0) {
+    grupoActual = delTurno[0];
+  } else {
+    grupoActual = null;
+  }
+
+  dibujarCursos();
+  mostrarGrilla();
+}
+
+// Clic en una celda: asigna el docente elegido en el sidebar
+function clicTabla(evento) {
+  // El clic puede caer sobre el texto de adentro, así que se busca la celda
+  var celda = evento.target.closest("td");
+
+  if (celda == null || !celda.classList.contains("celda")) {
+    return; // no es una celda de clase (hora o receso)
+  }
+
+  if (grupoActual == null) {
+    alert("Primero agrega o elige un curso con el botón + de CURSOS.");
+    return;
+  }
+
+  if (docenteActual == null) {
+    alert("Elige una materia en la barra lateral para asignarla a la celda.");
+    return;
+  }
+
+  // Si la celda ya tenía a este docente, se vacía
+  if (celda.getAttribute("data-docente") == docenteActual.id) {
+    vaciarCelda(celda);
+    actualizarHoras();
+    sinGuardar = true;
+    return;
+  }
+
+  // Si no, antes de asignarlo se comprueba que el docente no esté
+  // en otro curso en el mismo día y horario
+  var docente = docenteActual;   // por si cambia mientras se espera la respuesta
+  var idPedido = grupoActual.id;
+  var dia = DIAS[celda.cellIndex - 1];
+  var partes = celda.parentNode.cells[0].textContent.split(" - ");
+
+  llamarApi("conflicto_docente", { idgrupo: idPedido, iddocente: docente.id, dia: dia, inicio: partes[0], fin: partes[1] })
+    .then(function (datos) {
+      if (datos.conflicto != null) {
+        alert(docente.nombre + " ya está asignado el " + dia + " de " + datos.conflicto.inicio + " a " + datos.conflicto.fin +
+              " en el curso " + datos.conflicto.grupo + ". Un docente no puede estar en dos cursos al mismo tiempo.");
+        return;
+      }
+
+      // Si mientras tanto se cambió de curso, no se asigna nada
+      if (grupoActual == null || grupoActual.id != idPedido) {
+        return;
+      }
+
+      ponerEnCelda(celda, docente.id, docente.idmateria, docente.nombre, docente.materia);
+      actualizarHoras();
+      sinGuardar = true;
+    })
+    .catch(mostrarError);
+}
+
+// Vacía todas las celdas (se aplica al guardar)
+function limpiarGrilla() {
+  if (contarHoras() == 0) {
+    return;
+  }
+  if (confirm("¿Borrar todos los docentes de la grilla? Se aplica al guardar el horario.")) {
+    dibujarGrilla();
+    sinGuardar = true;
+    mostrarAviso("");
+  }
+}
+
+// Antes de volver al menú: avisar si hay cambios sin guardar
+function confirmarSalida() {
+  if (sinGuardar) {
+    return confirm("Hay cambios sin guardar en la grilla. ¿Volver al menú de todos modos?");
+  }
+  return true;
+}
+
+function mostrarAviso(texto) {
+  document.getElementById("aviso").textContent = texto;
+}
+
+
+// Guarda la grilla en la base de datos (tabla Clases_Asignadas)
+function guardarHorario() {
+  if (grupoActual == null) {
+    alert("Primero agrega un curso con el botón + de CURSOS.");
+    return;
+  }
+
+  // Recorrer la tabla y juntar las celdas que tienen docente
+  var filasTabla = document.getElementById("cuerpo-tabla").rows;
+  var clases = [];
+
+  for (var i = 0; i < filasTabla.length; i++) {
+    var fila = filasTabla[i];
+    if (fila.className == "receso") {
+      continue;
+    }
+
+    var partes = fila.cells[0].textContent.split(" - ");
+
+    for (var c = 1; c <= 5; c++) {
+      var celda = fila.cells[c];
+      var iddocente = celda.getAttribute("data-docente");
+
+      if (iddocente) {
+        clases.push({
+          dia: DIAS[c - 1],
+          inicio: partes[0],
+          fin: partes[1],
+          iddocente: Number(iddocente),
+          idmateria: Number(celda.getAttribute("data-materia"))
+        });
+      }
+    }
+  }
+
+  if (clases.length == 0) {
+    var seguir = confirm("La grilla está vacía. Se borrarán las clases guardadas de este curso. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  mostrarAviso("Guardando...");
+  llamarApi("guardar_grilla", { idgrupo: grupoActual.id, clases: JSON.stringify(clases) })
+    .then(function (datos) {
+      sinGuardar = false;
+      mostrarAviso("Horario guardado en la base de datos ✔ (" + datos.guardadas + " clases)");
+    })
+    .catch(function (error) {
+      mostrarAviso("");
+      mostrarError(error);
+    });
+}
+
+
+// ---------- DOCENTES ----------
+
+// Dibuja la lista de docentes en el sidebar
+function dibujarDocentes() {
+  var lista = document.getElementById("lista-docentes");
+  lista.innerHTML = "";
+
+  for (var i = 0; i < docentes.length; i++) {
+    var d = docentes[i];
+
+    var item = document.createElement("div");
+    item.className = "item-filtro";
+    if (docenteActual != null && d.id == docenteActual.id) {
+      item.className += " activo";
+    }
+    item.setAttribute("data-id", d.id);
+    item.title = "Docente: " + d.nombre + " · Documento: " + d.documento;
+    item.onclick = function () {
+      seleccionarDocente(this.getAttribute("data-id"));
     };
 
-    // 3. Renderizar las filas dinámicamente en la tabla
-    const cuerpoTabla = document.getElementById('cuerpo-tabla');
-    cuerpoTabla.innerHTML = ''; // Limpiar filas anteriores
+    var bullet = document.createElement("span");
+    bullet.className = "bullet";
+    bullet.textContent = "●";
 
-    const filas = horariosPorTurno[idTurno] || horariosPorTurno["1"];
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    var materia = document.createElement("span");
+    materia.textContent = d.materia;
 
-    filas.forEach(f => {
-      const tr = document.createElement('tr');
-      if (f.tipo === "receso") {
-        tr.className = "receso";
-        tr.innerHTML = `<td class="hora">${f.hora}</td><td colspan="5">RECESO</td>`;
-      } else {
-        // Separamos la hora de inicio y fin para mandarla a la BD
-        let horas = f.hora.split(" - ");
-        let hora_inicio = horas[0];
-        let hora_fin = horas[1];
+    var nombre = document.createElement("span");
+    nombre.className = "detalle-item";
+    nombre.textContent = d.nombre;
 
-        let filaHtml = `<td class="hora">${f.hora}</td>`;
-        
-        // Creamos las celdas editables para cada día
-        dias.forEach(dia => {
-          filaHtml += `<td class="celda" contenteditable="true" 
-                           data-dia="${dia}" 
-                           data-horainicio="${hora_inicio}" 
-                           data-horafin="${hora_fin}"
-                           data-curso="${nombreCurso}"
-                           onblur="guardarEnBD(this)"></td>`;
-        });
-        tr.innerHTML = filaHtml;
-      }
-      cuerpoTabla.appendChild(tr);
+    var borrar = document.createElement("span");
+    borrar.className = "borrar";
+    borrar.textContent = "×";
+    borrar.title = "Borrar docente";
+    borrar.onclick = function (evento) {
+      evento.stopPropagation();   // que no cuente como clic en el docente
+      borrarDocente(this.parentNode.getAttribute("data-id"));
+    };
+
+    item.appendChild(bullet);
+    item.appendChild(materia);
+    item.appendChild(nombre);
+    item.appendChild(borrar);
+    lista.appendChild(item);
+  }
+
+  // Contador de materias
+  if (docentes.length == 1) {
+    document.getElementById("badge-docentes").textContent = "1 materia";
+  } else {
+    document.getElementById("badge-docentes").textContent = docentes.length + " materias";
+  }
+
+  // Marcar "Ninguno" si no hay docente elegido
+  var ninguno = document.getElementById("docente-todos");
+  if (docenteActual == null) {
+    ninguno.className = "item-filtro activo";
+    document.getElementById("info-docente").textContent = "Sin materia elegida";
+  } else {
+    ninguno.className = "item-filtro";
+    document.getElementById("info-docente").textContent = "Asignando: " + docenteActual.materia + " (" + docenteActual.nombre + ")";
+  }
+}
+
+// Llena las sugerencias del campo "Materia" con las materias de la base de datos
+function llenarMaterias() {
+  var datalist = document.getElementById("lista-materias");
+  datalist.innerHTML = "";
+  for (var i = 0; i < materias.length; i++) {
+    var opcion = document.createElement("option");
+    opcion.value = materias[i];
+    datalist.appendChild(opcion);
+  }
+}
+
+// Botón "+" de DOCENTES: abre el formulario
+function agregarDocente() {
+  document.getElementById("docente-nombre").value = "";
+  document.getElementById("docente-materia").value = "";
+  document.getElementById("docente-documento").value = "";
+  document.getElementById("docente-error").textContent = "";
+  document.getElementById("modal-docente").classList.add("activo");
+  document.getElementById("docente-materia").focus();
+}
+
+function cerrarFormDocente() {
+  document.getElementById("modal-docente").classList.remove("activo");
+}
+
+// Valida una cédula uruguaya (misma fórmula que en api_horarios.php).
+// Devuelve solo los dígitos si es válida, o "" si no lo es.
+function cedulaValida(texto) {
+  var digitos = texto.replace(/[.\-\s]/g, "");
+
+  if (!/^[0-9]{6,8}$/.test(digitos) || Number(digitos) == 0) {
+    return "";   // no son 6 a 8 números, o es todo ceros
+  }
+
+  var relleno = digitos;
+  while (relleno.length < 8) {
+    relleno = "0" + relleno;      // se completa con ceros a la izquierda hasta 8 dígitos
+  }
+
+  var pesos = [2, 9, 8, 7, 6, 3, 4];
+  var suma = 0;
+  for (var i = 0; i < 7; i++) {
+    suma += Number(relleno.charAt(i)) * pesos[i];
+  }
+  var verificador = (10 - suma % 10) % 10;
+
+  if (verificador != Number(relleno.charAt(7))) {
+    return "";
+  }
+  return digitos;
+}
+
+var guardandoDocente = false;   // evita guardar dos veces si se hace doble clic
+
+// Botón "Guardar docente" del formulario: lo guarda en la base de datos
+function guardarDocente(evento) {
+  evento.preventDefault();
+
+  if (guardandoDocente) {
+    return;
+  }
+
+  var nombre = document.getElementById("docente-nombre").value.trim();
+  var materia = document.getElementById("docente-materia").value.trim();
+  var documento = document.getElementById("docente-documento").value.trim();
+  var error = document.getElementById("docente-error");
+
+  if (nombre == "" || materia == "" || documento == "") {
+    error.textContent = "Completa la materia, el nombre del docente y el documento.";
+    return;
+  }
+
+  var cedula = cedulaValida(documento);
+  if (cedula == "") {
+    error.textContent = "El documento no es una cédula uruguaya válida. Revisa los números (ejemplo: 1.234.567-2).";
+    return;
+  }
+
+  error.textContent = "";
+  guardandoDocente = true;
+
+  llamarApi("agregar_docente", { nombre: nombre, documento: cedula, telefono: "", materia: materia })
+    .then(function (datos) {
+      guardandoDocente = false;
+      cerrarFormDocente();
+      cargarDatos(function () {
+        // Dejar elegido al docente nuevo para asignarlo enseguida
+        docenteActual = buscarPorId(docentes, { id: datos.id });
+        dibujarDocentes();
+      });
+    })
+    .catch(function (e) {
+      guardandoDocente = false;
+      error.textContent = e.message;   // el error se muestra dentro del formulario
     });
+}
+
+// Elegir un docente del sidebar (-1 = ninguno)
+function seleccionarDocente(id) {
+  if (id == -1) {
+    docenteActual = null;
+  } else {
+    docenteActual = buscarPorId(docentes, { id: id });
+  }
+  dibujarDocentes();
+}
+
+// Botón × de cada docente
+function borrarDocente(id) {
+  var docente = buscarPorId(docentes, { id: id });
+  if (docente == null) {
+    return;
   }
 
-  // Función AJAX para enviar los datos a PHP sin recargar la página
-  function guardarEnBD(celda) {
-    let contenido = celda.innerText.trim();
-    
-    // Si la celda está vacía, no enviamos nada
-    if(contenido === "") return;
-
-    let datos = new FormData();
-    datos.append('contenido', contenido); 
-    datos.append('dia', celda.dataset.dia);
-    datos.append('hora_inicio', celda.dataset.horainicio);
-    datos.append('hora_fin', celda.dataset.horafin);
-    datos.append('curso', celda.dataset.curso);
-
-    // Apuntamos al archivo PHP que procesará esto
-    fetch('guardar_celda.php', {
-      method: 'POST',
-      body: datos
-    })
-    .then(response => response.text())
-    .then(data => {
-      console.log("Servidor:", data);
-      celda.style.backgroundColor = "#e8f5e9"; // Pinta la celda de verde claro si guardó exitosamente
-      setTimeout(() => celda.style.backgroundColor = "", 2000); // Vuelve a la normalidad
-    })
-    .catch(error => console.error('Error:', error));
+  var mensaje = "¿Borrar la materia " + docente.materia + " y a su docente " + docente.nombre + " de la base de datos? También se borran sus clases asignadas en todas las grillas.";
+  if (sinGuardar) {
+    mensaje += "\n\nAdemás hay cambios sin guardar en la grilla actual: se van a perder.";
+  }
+  var quitar = confirm(mensaje);
+  if (!quitar) {
+    return;
   }
 
-  // Ejecutar la función al cargar la página para que la tabla inicial ya sea editable
-  window.onload = function() {
-    aplicarTurnoAGrilla();
-  };
+  llamarApi("borrar_docente", { id: id })
+    .then(function () {
+      if (docenteActual != null && docenteActual.id == id) {
+        docenteActual = null;
+      }
+      cargarDatos(mostrarGrilla);   // las grillas pudieron cambiar
+    })
+    .catch(mostrarError);
+}
+
+
+// ---------- CURSOS ----------
+
+// Cursos que pertenecen al turno elegido
+function gruposDelTurno() {
+  var lista = [];
+  for (var i = 0; i < grupos.length; i++) {
+    if (grupos[i].turno == turnoActual) {
+      lista.push(grupos[i]);
+    }
+  }
+  return lista;
+}
+
+// Dibuja la lista de cursos del turno en el sidebar
+function dibujarCursos() {
+  var lista = document.getElementById("lista-cursos");
+  lista.innerHTML = "";
+
+  var delTurno = gruposDelTurno();
+
+  for (var i = 0; i < delTurno.length; i++) {
+    var g = delTurno[i];
+
+    var item = document.createElement("div");
+    item.className = "item-filtro";
+    if (grupoActual != null && g.id == grupoActual.id) {
+      item.className += " activo";
+    }
+    item.setAttribute("data-id", g.id);
+    item.onclick = function () {
+      seleccionarCurso(this.getAttribute("data-id"));
+    };
+
+    var bullet = document.createElement("span");
+    bullet.className = "bullet";
+    bullet.textContent = "●";
+
+    var nombre = document.createElement("span");
+    nombre.textContent = g.curso;
+
+    var alumnos = document.createElement("span");
+    alumnos.className = "detalle-item";
+    alumnos.textContent = g.cantidad + " alumnos";
+
+    var borrar = document.createElement("span");
+    borrar.className = "borrar";
+    borrar.textContent = "×";
+    borrar.title = "Borrar curso";
+    borrar.onclick = function (evento) {
+      evento.stopPropagation();
+      borrarCurso(this.parentNode.getAttribute("data-id"));
+    };
+
+    item.appendChild(bullet);
+    item.appendChild(nombre);
+    item.appendChild(alumnos);
+    item.appendChild(borrar);
+    lista.appendChild(item);
+  }
+
+  // Contador de cursos y curso activo
+  if (delTurno.length == 1) {
+    document.getElementById("badge-cursos").textContent = "1 curso";
+  } else {
+    document.getElementById("badge-cursos").textContent = delTurno.length + " cursos";
+  }
+
+  if (grupoActual == null) {
+    document.getElementById("curso-activo").textContent = "ninguno";
+  } else {
+    document.getElementById("curso-activo").textContent = grupoActual.curso;
+  }
+}
+
+// Botón "+" de CURSOS: crea el curso en la base de datos, en el turno elegido
+function agregarCurso() {
+  var nombre = prompt("Nombre del nuevo curso para el turno " + turnoActual + " (por ejemplo 3MF):");
+  if (nombre === null) {
+    return;
+  }
+  nombre = nombre.trim();
+  if (nombre == "") {
+    alert("Escribe un nombre.");
+    return;
+  }
+
+  var texto = prompt("Cantidad de alumnos:", "0");
+  if (texto === null) {
+    return;
+  }
+  var cantidad = parseInt(texto, 10);
+  if (isNaN(cantidad) || cantidad < 0) {
+    alert("La cantidad de alumnos tiene que ser un número de 0 en adelante.");
+    return;
+  }
+
+  // La base de datos pide un docente para el curso: se usa el elegido (o 0 si no hay)
+  var iddocente = 0;
+  if (docenteActual != null) {
+    iddocente = docenteActual.id;
+  }
+
+  llamarApi("agregar_grupo", { curso: nombre, turno: turnoActual, cantidad: cantidad, iddocente: iddocente })
+    .then(function (datos) {
+      cargarDatos(function () {
+        seleccionarCurso(datos.id);   // queda elegido el curso nuevo
+      });
+    })
+    .catch(mostrarError);
+}
+
+// Elegir un curso del sidebar: muestra su grilla guardada
+function seleccionarCurso(id) {
+  var nuevo = buscarPorId(grupos, { id: id });
+
+  if (nuevo == null) {
+    return;
+  }
+  if (grupoActual != null && nuevo.id == grupoActual.id) {
+    return;
+  }
+
+  if (sinGuardar) {
+    var seguir = confirm("Hay cambios sin guardar en la grilla. Si cambias de curso se pierden. ¿Continuar?");
+    if (!seguir) {
+      return;
+    }
+  }
+
+  grupoActual = nuevo;
+  dibujarCursos();
+  mostrarGrilla();
+}
+
+// Botón × de cada curso
+function borrarCurso(id) {
+  var curso = buscarPorId(grupos, { id: id });
+  if (curso == null) {
+    return;
+  }
+
+  var quitar = confirm("¿Borrar el curso " + curso.curso + " (" + curso.turno + ") de la base de datos? También se borra su horario guardado.");
+  if (!quitar) {
+    return;
+  }
+
+  llamarApi("borrar_grupos", { ids: JSON.stringify([Number(id)]) })
+    .then(function () {
+      var eraElActual = (grupoActual != null && grupoActual.id == id);
+      if (eraElActual) {
+        grupoActual = null;
+      }
+      cargarDatos(function () {
+        if (eraElActual) {
+          mostrarGrilla();   // queda la grilla vacía
+        }
+      });
+    })
+    .catch(mostrarError);
+}
+
+
+// Al abrir la página: leer todo de la base de datos
+dibujarGrilla();
+cargarDatos(function () {
+  var delTurno = gruposDelTurno();
+  if (delTurno.length > 0) {
+    grupoActual = delTurno[0];
+    dibujarCursos();
+  }
+  mostrarGrilla();
+});
+</script>
+
+
+<!-- ================= JAVASCRIPT DEL CHATBOT ================= -->
+<script>
+var btnAyuda = document.getElementById("btnAyuda");
+var btnCerrar = document.getElementById("btnCerrar");
+var chatContainer = document.getElementById("chatContainer");
+var chatForm = document.getElementById("chatForm");
+var mensajeInput = document.getElementById("mensajeInput");
+var chatBox = document.getElementById("chatBox");
+
+// Abrir y cerrar el chat
+btnAyuda.onclick = function () {
+  chatContainer.classList.toggle("activo");
+  if (chatContainer.classList.contains("activo")) {
+    mensajeInput.focus();
+  }
+};
+
+btnCerrar.onclick = function () {
+  chatContainer.classList.remove("activo");
+};
+
+// Agrega un mensaje al chat
+function agregarMensaje(texto, remitente) {
+  var div = document.createElement("div");
+  div.className = "mensaje " + remitente;
+
+  if (remitente == "usuario") {
+    div.textContent = texto;   // lo que escribe el usuario va como texto simple
+  } else {
+    div.innerHTML = texto;     // el bot puede devolver negritas
+  }
+
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Envía la pregunta al servidor
+function enviarConsulta(mensaje) {
+  agregarMensaje(mensaje, "usuario");
+
+  var formData = new FormData();
+  formData.append("mensaje", mensaje);
+
+  // Ajusta la ruta a api_chat.php según donde esté tu archivo backend
+  fetch("../api_chat.php", { method: "POST", body: formData })
+    .then(function (respuesta) {
+      if (!respuesta.ok) {
+        throw new Error("Error en servidor");
+      }
+      return respuesta.json();
+    })
+    .then(function (datos) {
+      agregarMensaje(datos.respuesta, "bot");
+    })
+    .catch(function () {
+      agregarMensaje("Error al conectar con el asistente.", "bot");
+    });
+}
+
+chatForm.onsubmit = function (e) {
+  e.preventDefault();
+  var mensaje = mensajeInput.value.trim();
+  if (mensaje != "") {
+    enviarConsulta(mensaje);
+    mensajeInput.value = "";
+  }
+};
+
+// Botones de pruebas rápidas
+function ejecutarPrueba(pregunta) {
+  enviarConsulta(pregunta);
+}
 </script>
 
 </body>
