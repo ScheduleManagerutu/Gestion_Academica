@@ -14,10 +14,19 @@ body {
 
 /* Sidebar */
 .sidebar {
-  width: 220px;
-  padding: 20px;
+  /* Un poco más grande y adaptable: entre 250px y 320px según el ancho de la pantalla */
+  width: clamp(250px, 19vw, 320px);
+  flex-shrink: 0;
+  padding: 22px;
   border-right: 1px solid #d6d5d1c2;
-  min-height: 100vh;
+  /* Queda fija a la vista; si la lista es larga, tiene su propio scroll */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+  /* La letra crece un poco con la pantalla (14px a 16px); lo de adentro usa "em" */
+  font-size: clamp(14px, 0.95vw, 16px);
 }
 /* Botón para volver al menú inicial (index.php) */
 .btn-volver {
@@ -26,10 +35,10 @@ body {
   background: #283e53;
   color: #fff;
   text-decoration: none;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 24px;
+  font-size: 0.92em;
+  margin-bottom: 26px;
 }
 .btn-volver:hover {
   background: #3b5873;
@@ -37,33 +46,33 @@ body {
 }
 
 .seccion {
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 .seccion-titulo {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 0.78em;
   letter-spacing: 1px;
   color: #8a8a8a;
-  margin-bottom: 10px;
+  margin-bottom: 11px;
 }
 .seccion-titulo .agregar {
   background: #d6d5d5;
   color: #b5891c;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 11px;
+  width: 1.6em;
+  height: 1.6em;
+  font-size: 1em;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 .item-filtro {
-  padding: 8px 10px;
+  padding: 9px 11px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 1em;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -79,12 +88,12 @@ body {
 }
 .item-filtro .horas {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 0.8em;
   color: #999;
 }
 .item-filtro .borrar {
   margin-left: auto;
-  font-size: 15px;
+  font-size: 1.15em;
   color: #999;
 }
 .item-filtro .borrar:hover {
@@ -98,14 +107,38 @@ body {
   color: #888;
 }
 
+/* ================= BUSCADOR DE MATERIAS (barra lateral) ================= */
+.buscador {
+  width: 100%;
+  padding: 8px 11px;
+  margin-bottom: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.92em;
+  background: #fffdf9;
+  color: #3a3a3a;
+}
+.buscador:focus {
+  outline: none;
+  border-color: #283e53;
+}
+/* Mensaje cuando la búsqueda no encuentra ninguna materia */
+.sin-resultados {
+  padding: 8px 10px;
+  font-size: 0.9em;
+  color: #999;
+}
+
 /* Contenido principal */
 .contenido {
   flex: 1;
+  min-width: 0;   /* para que la tabla no empuje a la barra lateral */
   padding: 20px 30px;
 }
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   border-bottom: 1px solid #c7c7c7;
   margin-bottom: 20px;
@@ -125,6 +158,8 @@ body {
 
 .titulo-seccion {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
@@ -155,6 +190,7 @@ body {
 /* Barra de grupo y botones de guardado (también la usa la vista de horarios) */
 .barra-guardar, .barra-filtros {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   background: #fffdf9;
@@ -228,6 +264,29 @@ body {
   font-size: 13px;
 }
 
+/* Aviso y botón "Descargar respaldo": quedan al final (derecha) de la barra de filtros */
+#aviso-respaldo {
+  margin-left: auto;
+  font-size: 12px;
+  color: #2f6b34;
+}
+.btn-respaldo {
+  background: #283e53;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-respaldo:hover {
+  background: #3b5873;
+}
+.btn-respaldo:disabled {
+  background: #8a8a8a;
+  cursor: wait;
+}
+
 /* Texto más oscuro en la lista de horarios */
 .tabla-lista tbody td {
   color: #3a3a3a;
@@ -289,10 +348,10 @@ tbody td.celda small, tbody td.ocupada small {
 
 /* Datos extra en las listas del sidebar (materia del docente, alumnos del curso) */
 .item-filtro .detalle-item {
-  font-size: 11px;
+  font-size: 0.8em;
   color: #999;
   font-weight: normal;
-  max-width: 70px;
+  max-width: 45%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -320,6 +379,8 @@ tbody td.celda small, tbody td.ocupada small {
   padding: 20px 22px;
   width: 340px;
   max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 .modal-caja h3 {
@@ -340,6 +401,11 @@ tbody td.celda small, tbody td.ocupada small {
   margin-bottom: 12px;
   font-size: 13px;
 }
+/* Campo que se muestra pero no se puede cambiar (por ejemplo el turno al crear un curso) */
+.modal-caja input[readonly] {
+  background: #eeeeee;
+  color: #666;
+}
 .modal-error {
   color: #c9302c;
   font-size: 12px;
@@ -356,7 +422,7 @@ tbody td.celda small, tbody td.ocupada small {
   background: #fffdf9;
   border: 1px solid #e6ddc9;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;   /* en pantallas chicas la tabla se desplaza hacia el costado */
 }
 .curso-header {
   display: flex;
@@ -426,18 +492,23 @@ tbody td.celda.asignada {
   font-weight: bold;
 }
 
-/* Fila de receso: no clickeable, color distinto */
-tr.receso td {
-  background-color: #d1d1d0;
-  color: #5f5f5f;
+/* ================= FILA DE RECREO ================= */
+/* El JavaScript le pone la clase "recreo" a la fila.
+   Fondo más oscuro que el resto de la grilla, texto centrado, y no es clickeable. */
+tr.recreo td {
+  background-color: #c4c4c3;
+  color: #3f3f3f;
+  font-weight: bold;
   font-style: italic;
   text-align: center;
+  vertical-align: middle;
   cursor: default;
 }
-tr.receso td.hora {
-  color: #969696;
+/* La hora del recreo (por ejemplo 09:00 - 09:05) también va centrada */
+tr.recreo td.hora {
+  color: #3f3f3f;
   font-style: normal;
-  font-weight: bold;
+  text-align: center;
 }
 
 
@@ -503,7 +574,7 @@ tr.receso td.hora {
 }
 
 .chat-box {
-  height: 260px;
+  height: min(260px, 32vh);
   padding: 10px;
   overflow-y: auto;
   background: #fdfdfd;
@@ -577,4 +648,77 @@ tr.receso td.hora {
   border-radius: 3px;
   font-size: 10px;
   cursor: pointer;
+}
+
+
+/* ================= CONTADOR DE HORAS DE CADA MATERIA ================= */
+/* Aparece en la barra lateral: horas asignadas / máximo semanal (por ejemplo 3/16 h) */
+.item-filtro .horas-materia {
+  margin-left: auto;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #555;
+  background: #e2e2e1;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.item-filtro .horas-materia.lleno {
+  background: #fbe1e0;
+  color: #c9302c;
+}
+.item-filtro .horas-materia + .borrar {
+  margin-left: 0;
+}
+
+
+/* ================= ADAPTACIÓN A LA PANTALLA DEL DISPOSITIVO ================= */
+@media (max-width: 1000px) {
+  .contenido {
+    padding: 16px 18px;
+  }
+}
+
+/* Tablet y celular: la barra lateral pasa arriba, a todo el ancho, con sus secciones una al lado de otra */
+@media (max-width: 860px) {
+  .layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    overflow-y: visible;
+    border-right: none;
+    border-bottom: 1px solid #d6d5d1c2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    column-gap: 24px;
+  }
+  .sidebar .btn-volver {
+    grid-column: 1 / -1;
+  }
+  #tabla-horario, table.grilla {
+    min-width: 640px;
+  }
+  .tabla-lista {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 520px) {
+  .contenido {
+    padding: 12px;
+  }
+  .titulo-seccion h2 {
+    font-size: 16px;
+  }
+  .ayuda {
+    right: 12px;
+    bottom: 14px;
+  }
+  .chat-container {
+    right: 12px;
+    bottom: 62px;
+  }
 }

@@ -1,6 +1,6 @@
 <?php
 // api_horarios.php
-// Recibe los pedidos de vista_creación-horarios.html y vista_horarios-creados.html
+// Recibe los pedidos de vista_creacion-horarios.html y vista_horarios-creados.html
 // (siempre por POST) y responde en formato JSON.
 //
 // Usa SOLO tablas que ya existen: Docente, Materia, Grupo, Clases_Asignadas,
@@ -23,6 +23,12 @@ require __DIR__ . '/conexion_horarios.php';
 
 $TURNOS = ["Matutino", "Vespertino", "Nocturno"];
 $DIAS   = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+// Horas de cada turno (están en un solo archivo, que también usa el chat)
+require __DIR__ . '/turnos_horarios.php';
+
+// Máximo de horas semanales que puede tener cada materia (cada celda de la grilla es 1 hora)
+const MAX_HORAS_SEMANA = 16;
 
 
 // ---------- Funciones de ayuda ----------
@@ -77,6 +83,74 @@ function partirNombre($nombre) {
     return [$nombre, ""];
 }
 
+// Agrega "curso" y "turno" a cada fila que trae el nombre del grupo
+function conCursoYTurno($filas) {
+    foreach ($filas as $i => $fila) {
+        $partes = partirNombre($fila["nombre"]);
+        $filas[$i]["curso"] = $partes[0];
+        $filas[$i]["turno"] = $partes[1];
+    }
+    return $filas;
+}
+
+// Las horas de los turnos en el formato que usan las páginas: {hora: "07:30 - 08:15", tipo: "clase"}
+function horasParaPagina() {
+    $resultado = [];
+    foreach (HORARIOS as $turno => $filas) {
+        foreach ($filas as $fila) {
+            $resultado[$turno][] = ["hora" => $fila[0] . " - " . $fila[1], "tipo" => $fila[2]];
+        }
+    }
+    return $resultado;
+}
+
+// Dice si una hora de inicio y fin es una CLASE (no un recreo) del turno indicado
+function horaEnTurno($turno, $inicio, $fin) {
+    if (!isset(HORARIOS[$turno])) {
+        return false;
+    }
+    foreach (HORARIOS[$turno] as $fila) {
+        if ($fila[2] == "clase" && $fila[0] == $inicio && $fila[1] == $fin) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Devuelve "?,?,?" con un signo de pregunta por cada elemento (para usar con IN (...))
+function marcadores($cantidad) {
+    return implode(",", array_fill(0, $cantidad, "?"));
+}
+
+// Valida una cédula de identidad uruguaya. Acepta con o sin puntos y guion
+// ("1.234.567-2" o "12345672"). Devuelve solo los dígitos si es válida, o "" si no lo es.
+//
+// Fórmula del dígito verificador:
+//   1) Se completa con ceros a la izquierda hasta tener 8 dígitos (7 del número + 1 verificador).
+//   2) Cada uno de los primeros 7 dígitos se multiplica por 2, 9, 8, 7, 6, 3 y 4, y se suman los resultados.
+//   3) El verificador es lo que falta para llegar a la decena siguiente: (10 - suma % 10) % 10.
+//   4) Tiene que ser igual al último dígito de la cédula.
+function cedulaValida($texto) {
+    $digitos = preg_replace('/[.\-\s]/', '', $texto);
+
+    if (preg_match('/^[0-9]{6,8}$/', $digitos) !== 1 || (int)$digitos == 0) {
+        return "";   // no son 6 a 8 números, o es todo ceros
+    }
+
+    $relleno = str_pad($digitos, 8, "0", STR_PAD_LEFT);
+    $pesos = [2, 9, 8, 7, 6, 3, 4];
+    $suma = 0;
+    for ($i = 0; $i < 7; $i++) {
+        $suma += (int)$relleno[$i] * $pesos[$i];
+    }
+    $verificador = (10 - $suma % 10) % 10;
+
+    if ($verificador != (int)$relleno[7]) {
+        return "";
+    }
+    return $digitos;
+}
+
 // Comprueba que una hora tenga el formato HH:MM
 function horaValida($hora) {
     return preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $hora) === 1;
@@ -104,6 +178,44 @@ function buscarConflicto($pdo, $idgrupo, $iddocente, $dia, $inicio, $fin) {
         return null;
     }
     return $fila;
+}
+
+// Igual que buscarConflicto(), pero para todas las clases de una grilla a la vez.
+// Hace UNA sola consulta (las clases de esos docentes en otros cursos) y compara en PHP.
+// Devuelve ["clase" => la clase nueva, "otra" => la clase que ya existía], o null si no hay choque.
+function buscarConflictosVarios($pdo, $idgrupo, $clases) {
+    $ids = [];
+    foreach ($clases as $c) {
+        $ids[(int)$c["iddocente"]] = true;
+    }
+    $ids = array_keys($ids);
+
+    if (count($ids) == 0) {
+        return null;
+    }
+
+    $s = $pdo->prepare(
+        "SELECT c.IDdocente AS iddocente, c.Dia AS dia,
+                TIME_FORMAT(c.Hora_inicio, '%H:%i') AS inicio,
+                TIME_FORMAT(c.Hora_fin, '%H:%i') AS fin,
+                g.Nombre AS grupo
+         FROM Clases_Asignadas c
+         INNER JOIN Grupo g ON g.IDgrupo = c.IDgrupo
+         WHERE c.IDgrupo <> ? AND c.IDdocente IN (" . marcadores(count($ids)) . ")"
+    );
+    $s->execute(array_merge([$idgrupo], $ids));
+    $ocupadas = $s->fetchAll();
+
+    // Las horas "HH:MM" se pueden comparar como texto
+    foreach ($clases as $c) {
+        foreach ($ocupadas as $otra) {
+            if ($otra["iddocente"] == $c["iddocente"] && $otra["dia"] == $c["dia"]
+                && $otra["inicio"] < $c["fin"] && $otra["fin"] > $c["inicio"]) {
+                return ["clase" => $c, "otra" => $otra];
+            }
+        }
+    }
+    return null;
 }
 
 // Convierte un error de la base de datos en un mensaje entendible
@@ -146,29 +258,22 @@ try {
             $docentes = $pdo->query(
                 "SELECT d.IDdocente AS id, d.Nombre AS nombre, d.Documento AS documento,
                         d.Telefono AS telefono, d.Materia AS materia,
-                        (SELECT MIN(m.IDmateria) FROM Materia m WHERE m.Nombre = d.Materia) AS idmateria
+                        (SELECT MIN(m.IDmateria) FROM Materia m WHERE m.Nombre = d.Materia) AS idmateria,
+                        (SELECT COUNT(*) FROM Clases_Asignadas c WHERE c.IDdocente = d.IDdocente) AS horas
                  FROM Docente d
-                 ORDER BY d.Nombre"
+                 ORDER BY d.Materia, d.Nombre"
             )->fetchAll();
 
-            $filas = $pdo->query(
+            $grupos = conCursoYTurno($pdo->query(
                 "SELECT IDgrupo AS id, Nombre AS nombre, Cantidad_alumnos AS cantidad, IDdocente AS iddocente
                  FROM Grupo
                  ORDER BY Nombre"
-            )->fetchAll();
-
-            $grupos = [];
-            foreach ($filas as $fila) {
-                $partes = partirNombre($fila["nombre"]);
-                $fila["curso"] = $partes[0];
-                $fila["turno"] = $partes[1];
-                $grupos[] = $fila;
-            }
+            )->fetchAll());
 
             // Nombres de materias que ya existen (para sugerirlas al agregar un docente)
             $materias = $pdo->query("SELECT Nombre FROM Materia ORDER BY Nombre")->fetchAll(PDO::FETCH_COLUMN);
 
-            responder(["ok" => true, "docentes" => $docentes, "grupos" => $grupos, "materias" => $materias]);
+            responder(["ok" => true, "docentes" => $docentes, "grupos" => $grupos, "materias" => $materias, "horas" => horasParaPagina(), "maximo" => MAX_HORAS_SEMANA]);
             break;
 
 
@@ -180,7 +285,13 @@ try {
             $materia   = textoPost("materia");
 
             if ($nombre == "" || $documento == "" || $materia == "") {
-                fallar("Nombre, documento y materia son obligatorios.");
+                fallar("Materia, nombre del docente y documento son obligatorios.");
+            }
+
+            // El documento tiene que ser una cédula uruguaya válida; se guarda solo con los dígitos
+            $documento = cedulaValida($documento);
+            if ($documento == "") {
+                fallar("El documento no es una cédula uruguaya válida. Revisa los números (ejemplo: 1.234.567-2).");
             }
             if (mb_strlen($nombre) > 100 || mb_strlen($materia) > 100 || mb_strlen($documento) > 20 || mb_strlen($telefono) > 20) {
                 fallar("Alguno de los datos es demasiado largo (nombre y materia: 100, documento y teléfono: 20).");
@@ -274,12 +385,11 @@ try {
                 fallar("No hay cursos para borrar.");
             }
 
+            $m = marcadores(count($ids));
             $pdo->beginTransaction();
-            foreach ($ids as $id) {
-                $pdo->prepare("DELETE FROM Clases_Asignadas WHERE IDgrupo = ?")->execute([$id]);
-                $pdo->prepare("DELETE FROM Gestion_Usuario_Grupo WHERE IDgrupo = ?")->execute([$id]);
-                $pdo->prepare("DELETE FROM Grupo WHERE IDgrupo = ?")->execute([$id]);
-            }
+            $pdo->prepare("DELETE FROM Clases_Asignadas WHERE IDgrupo IN ($m)")->execute($ids);
+            $pdo->prepare("DELETE FROM Gestion_Usuario_Grupo WHERE IDgrupo IN ($m)")->execute($ids);
+            $pdo->prepare("DELETE FROM Grupo WHERE IDgrupo IN ($m)")->execute($ids);
             $pdo->commit();
 
             responder(["ok" => true]);
@@ -293,11 +403,7 @@ try {
                 fallar("No hay horarios para borrar.");
             }
 
-            $pdo->beginTransaction();
-            foreach ($ids as $id) {
-                $pdo->prepare("DELETE FROM Clases_Asignadas WHERE IDgrupo = ?")->execute([$id]);
-            }
-            $pdo->commit();
+            $pdo->prepare("DELETE FROM Clases_Asignadas WHERE IDgrupo IN (" . marcadores(count($ids)) . ")")->execute($ids);
 
             responder(["ok" => true]);
             break;
@@ -338,14 +444,18 @@ try {
                 fallar("Datos incompletos.");
             }
 
-            $s = $pdo->prepare("SELECT COUNT(*) FROM Grupo WHERE IDgrupo = ?");
+            // El curso tiene que existir; de su nombre se saca el turno ("3MF - Matutino")
+            $s = $pdo->prepare("SELECT Nombre FROM Grupo WHERE IDgrupo = ?");
             $s->execute([$idgrupo]);
-            if ($s->fetchColumn() == 0) {
+            $nombreGrupo = $s->fetchColumn();
+            if ($nombreGrupo === false) {
                 fallar("El curso ya no existe. Actualizá la página.", 404);
             }
+            $turnoGrupo = partirNombre($nombreGrupo)[1];
 
             // Validar todo antes de tocar la base de datos
             $docentesUsados = [];
+            $celdasUsadas = [];
             foreach ($clases as $c) {
                 if (!is_array($c)) {
                     fallar("Datos de clase no válidos.");
@@ -364,30 +474,74 @@ try {
                 if ($iddoc <= 0) {
                     fallar("Falta el docente en una de las clases.");
                 }
+                // La hora tiene que ser una clase del turno del curso (si el turno se conoce)
+                if ($turnoGrupo != "" && !horaEnTurno($turnoGrupo, $inicio, $fin)) {
+                    fallar("La hora " . $inicio . " - " . $fin . " no corresponde al turno " . $turnoGrupo . ".");
+                }
+                // No puede haber dos clases en la misma celda
+                $clave = $dia . "|" . $inicio . "|" . $fin;
+                if (isset($celdasUsadas[$clave])) {
+                    fallar("Hay dos clases en la misma celda (" . $dia . " " . $inicio . ").");
+                }
+                $celdasUsadas[$clave] = true;
                 $docentesUsados[$iddoc] = true;
             }
 
-            // Los docentes tienen que existir (se guardan sus nombres para los mensajes)
+            // Los docentes tienen que existir (una sola consulta; se guardan los nombres para los mensajes)
             $nombresDocentes = [];
-            foreach (array_keys($docentesUsados) as $iddoc) {
-                $s = $pdo->prepare("SELECT Nombre FROM Docente WHERE IDdocente = ?");
-                $s->execute([$iddoc]);
-                $nombreDocente = $s->fetchColumn();
-                if ($nombreDocente === false) {
+            $materiasDocentes = [];
+            if (count($docentesUsados) > 0) {
+                $idsDocentes = array_keys($docentesUsados);
+                $s = $pdo->prepare("SELECT IDdocente, Nombre, Materia FROM Docente WHERE IDdocente IN (" . marcadores(count($idsDocentes)) . ")");
+                $s->execute($idsDocentes);
+                foreach ($s->fetchAll() as $fila) {
+                    $nombresDocentes[(int)$fila["IDdocente"]] = $fila["Nombre"];
+                    $materiasDocentes[(int)$fila["IDdocente"]] = $fila["Materia"];
+                }
+                if (count($nombresDocentes) != count($idsDocentes)) {
                     fallar("Uno de los docentes ya no existe. Actualizá la página.");
                 }
-                $nombresDocentes[$iddoc] = $nombreDocente;
             }
 
-            // Un docente no puede estar en dos cursos al mismo tiempo
+            // Cada materia puede tener como máximo MAX_HORAS_SEMANA horas por semana:
+            // las de esta grilla más las que ya tiene en los otros cursos (una sola consulta)
+            $horasEnEstaGrilla = [];
             foreach ($clases as $c) {
-                $conflicto = buscarConflicto($pdo, $idgrupo, (int)$c["iddocente"], $c["dia"], $c["inicio"], $c["fin"]);
-                if ($conflicto !== null) {
-                    fallar($nombresDocentes[(int)$c["iddocente"]] . " ya está asignado el " . $c["dia"] .
-                           " de " . $conflicto["inicio"] . " a " . $conflicto["fin"] .
-                           " en el curso " . $conflicto["grupo"] .
-                           ". Un docente no puede estar en dos cursos al mismo tiempo.", 409);
+                $id = (int)$c["iddocente"];
+                if (!isset($horasEnEstaGrilla[$id])) {
+                    $horasEnEstaGrilla[$id] = 0;
                 }
+                $horasEnEstaGrilla[$id]++;
+            }
+            if (count($horasEnEstaGrilla) > 0) {
+                $idsConHoras = array_keys($horasEnEstaGrilla);
+                $s = $pdo->prepare(
+                    "SELECT IDdocente, COUNT(*) AS horas FROM Clases_Asignadas
+                     WHERE IDgrupo <> ? AND IDdocente IN (" . marcadores(count($idsConHoras)) . ")
+                     GROUP BY IDdocente"
+                );
+                $s->execute(array_merge([$idgrupo], $idsConHoras));
+                $horasEnOtros = [];
+                foreach ($s->fetchAll() as $fila) {
+                    $horasEnOtros[(int)$fila["IDdocente"]] = (int)$fila["horas"];
+                }
+
+                foreach ($horasEnEstaGrilla as $id => $horas) {
+                    $otras = isset($horasEnOtros[$id]) ? $horasEnOtros[$id] : 0;
+                    if ($horas + $otras > MAX_HORAS_SEMANA) {
+                        fallar("La materia " . $materiasDocentes[$id] . " (" . $nombresDocentes[$id] . ") pasaría de " . MAX_HORAS_SEMANA .
+                               " horas semanales: ya tiene " . $otras . " en otros cursos y se le asignan " . $horas . " en este.", 409);
+                    }
+                }
+            }
+
+            // Un docente no puede estar en dos cursos al mismo tiempo (una sola consulta para toda la grilla)
+            $choque = buscarConflictosVarios($pdo, $idgrupo, $clases);
+            if ($choque !== null) {
+                fallar($nombresDocentes[(int)$choque["clase"]["iddocente"]] . " ya está asignado el " . $choque["clase"]["dia"] .
+                       " de " . $choque["otra"]["inicio"] . " a " . $choque["otra"]["fin"] .
+                       " en el curso " . $choque["otra"]["grupo"] .
+                       ". Un docente no puede estar en dos cursos al mismo tiempo.", 409);
             }
 
             $pdo->beginTransaction();
@@ -428,24 +582,21 @@ try {
 
         // Devuelve los cursos que tienen un horario guardado (para la vista)
         case "listar_horarios":
-            $filas = $pdo->query(
+            $horarios = conCursoYTurno($pdo->query(
                 "SELECT g.IDgrupo AS id, g.Nombre AS nombre, g.Cantidad_alumnos AS cantidad,
                         COUNT(c.IDclase) AS clases
                  FROM Grupo g
                  INNER JOIN Clases_Asignadas c ON c.IDgrupo = g.IDgrupo
                  GROUP BY g.IDgrupo, g.Nombre, g.Cantidad_alumnos
                  ORDER BY g.Nombre"
-            )->fetchAll();
+            )->fetchAll());
 
-            $horarios = [];
-            foreach ($filas as $fila) {
-                $partes = partirNombre($fila["nombre"]);
-                $fila["curso"] = $partes[0];
-                $fila["turno"] = $partes[1];
-                $horarios[] = $fila;
-            }
+            // "grupos" son TODOS los cursos (también los que no tienen horario): sirven para eliminar un grupo completo
+            $grupos = conCursoYTurno($pdo->query(
+                "SELECT IDgrupo AS id, Nombre AS nombre FROM Grupo"
+            )->fetchAll());
 
-            responder(["ok" => true, "horarios" => $horarios]);
+            responder(["ok" => true, "horarios" => $horarios, "grupos" => $grupos, "horas" => horasParaPagina()]);
             break;
 
 

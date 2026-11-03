@@ -6,11 +6,11 @@
 $DB_HOST    = "localhost";
 $DB_NOMBRE  = "BD Web";
 $DB_USUARIO = "root";
-$DB_CLAVE   = "";
+$DB_CLAVE   = "1234";
 
 // Poné true SOLO mientras desarrollás: muestra el mensaje técnico del error.
 // En producción tiene que estar en false.
-$MODO_DEBUG = true;
+$MODO_DEBUG = false;
 
 try {
     $pdo = new PDO(
@@ -28,9 +28,9 @@ try {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(500);
 
-    $mensaje = "No se pudo conectar a la base de datos.";
+    $mensaje = "No se pudo conectar a la base de datos. Revisa los datos en conexion_horarios.php.";
     if ($MODO_DEBUG) {
-        $mensaje .= " " . $e->getMessage();
+        $mensaje .= " Detalle: " . $e->getMessage();
     }
     echo json_encode(["ok" => false, "error" => $mensaje], JSON_UNESCAPED_UNICODE);
     exit;
