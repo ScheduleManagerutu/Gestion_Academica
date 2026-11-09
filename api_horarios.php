@@ -156,6 +156,14 @@ function horaValida($hora) {
     return preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $hora) === 1;
 }
 
+// Deja un nombre en minúsculas, sin tildes y con un solo espacio entre palabras,
+// para comparar "María  Pérez" con "maria perez".
+function normalizarNombre($texto) {
+    $texto = mb_strtolower(trim((string)$texto), 'UTF-8');
+    $texto = strtr($texto, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n']);
+    return preg_replace('/\s+/', ' ', $texto);
+}
+
 // Busca si un docente ya tiene una clase en OTRO curso que se pise con el día y
 // horario indicados. Devuelve los datos de esa clase, o null si está libre.
 // Dos horarios se pisan si el que ya existe empieza antes de que termine el nuevo
@@ -167,7 +175,9 @@ function buscarConflicto($pdo, $idgrupo, $iddocente, $dia, $inicio, $fin) {
                 TIME_FORMAT(c.Hora_fin, '%H:%i') AS fin
          FROM Clases_Asignadas c
          INNER JOIN Grupo g ON g.IDgrupo = c.IDgrupo
-         WHERE c.IDdocente = ? AND c.IDgrupo <> ? AND c.Dia = ?
+         INNER JOIN Docente dc ON dc.IDdocente = c.IDdocente
+         INNER JOIN Docente d0 ON d0.Documento = dc.Documento
+         WHERE d0.IDdocente = ? AND c.IDgrupo <> ? AND c.Dia = ?
            AND c.Hora_inicio < ? AND c.Hora_fin > ?
          LIMIT 1"
     );
@@ -194,22 +204,36 @@ function buscarConflictosVarios($pdo, $idgrupo, $clases) {
         return null;
     }
 
+    // Una persona se identifica por su documento: puede tener varias materias (varias filas de Docente)
+    $s = $pdo->prepare("SELECT IDdocente, Documento FROM Docente WHERE IDdocente IN (" . marcadores(count($ids)) . ")");
+    $s->execute($ids);
+    $documentoDe = [];
+    foreach ($s->fetchAll() as $fila) {
+        $documentoDe[(int)$fila["IDdocente"]] = $fila["Documento"];
+    }
+    $documentos = array_values(array_unique(array_values($documentoDe)));
+    if (count($documentos) == 0) {
+        return null;
+    }
+
     $s = $pdo->prepare(
-        "SELECT c.IDdocente AS iddocente, c.Dia AS dia,
+        "SELECT dc.Documento AS documento, c.Dia AS dia,
                 TIME_FORMAT(c.Hora_inicio, '%H:%i') AS inicio,
                 TIME_FORMAT(c.Hora_fin, '%H:%i') AS fin,
                 g.Nombre AS grupo
          FROM Clases_Asignadas c
          INNER JOIN Grupo g ON g.IDgrupo = c.IDgrupo
-         WHERE c.IDgrupo <> ? AND c.IDdocente IN (" . marcadores(count($ids)) . ")"
+         INNER JOIN Docente dc ON dc.IDdocente = c.IDdocente
+         WHERE c.IDgrupo <> ? AND dc.Documento IN (" . marcadores(count($documentos)) . ")"
     );
-    $s->execute(array_merge([$idgrupo], $ids));
+    $s->execute(array_merge([$idgrupo], $documentos));
     $ocupadas = $s->fetchAll();
 
     // Las horas "HH:MM" se pueden comparar como texto
     foreach ($clases as $c) {
+        $documentoClase = $documentoDe[(int)$c["iddocente"]] ?? null;
         foreach ($ocupadas as $otra) {
-            if ($otra["iddocente"] == $c["iddocente"] && $otra["dia"] == $c["dia"]
+            if ($documentoClase !== null && $otra["documento"] == $documentoClase && $otra["dia"] == $c["dia"]
                 && $otra["inicio"] < $c["fin"] && $otra["fin"] > $c["inicio"]) {
                 return ["clase" => $c, "otra" => $otra];
             }
@@ -297,10 +321,22 @@ try {
                 fallar("Alguno de los datos es demasiado largo (nombre y materia: 100, documento y teléfono: 20).");
             }
 
-            $s = $pdo->prepare("SELECT COUNT(*) FROM Docente WHERE Documento = ?");
+            // Un docente puede tener más de una materia, pero solo si el documento Y el nombre
+            // coinciden con los del docente que ya está guardado. Cada materia es una fila de Docente.
+            $s = $pdo->prepare("SELECT Nombre, Materia FROM Docente WHERE Documento = ?");
             $s->execute([$documento]);
-            if ($s->fetchColumn() > 0) {
-                fallar("Ya existe un docente con ese documento.");
+            $existentes = $s->fetchAll();
+
+            if (count($existentes) > 0) {
+                if (normalizarNombre($existentes[0]["Nombre"]) != normalizarNombre($nombre)) {
+                    fallar("Ese documento ya pertenece a " . $existentes[0]["Nombre"] .
+                           ". Para agregarle otra materia, el nombre tiene que coincidir con el documento.", 409);
+                }
+                foreach ($existentes as $fila) {
+                    if (normalizarNombre($fila["Materia"]) == normalizarNombre($materia)) {
+                        fallar($existentes[0]["Nombre"] . " ya tiene la materia " . $fila["Materia"] . ".", 409);
+                    }
+                }
             }
 
             $pdo->beginTransaction();
